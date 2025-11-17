@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
+
+	"rauth/database"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -20,6 +24,12 @@ func main() {
 		log.Fatalf("❌ Environment validation failed: %v", err)
 	}
 	log.Println("✅ Environment variables loaded")
+
+	// Connect to PostgreSQL
+	if err := database.Connect(); err != nil {
+		log.Fatalf("❌ Database connection failed: %v", err)
+	}
+	defer database.Close()
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -39,13 +49,29 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New())
 
-	// Health check endpoint
+	// Health check endpoint (now includes database status)
 	app.Get("/health", func(c *fiber.Ctx) error {
+		dbStatus := "ok"
+		if err := database.Ping(); err != nil {
+			dbStatus = "error"
+		}
+
 		return c.JSON(fiber.Map{
-			"status":  "ok",
-			"service": "authflow",
+			"status":   "ok",
+			"service":  "authflow",
+			"database": dbStatus,
 		})
 	})
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-quit
+		log.Println("🛑 Shutting down server...")
+		_ = app.Shutdown()
+	}()
 
 	// Get port from env or use default
 	port := os.Getenv("PORT")
@@ -55,13 +81,15 @@ func main() {
 
 	// Start server
 	log.Printf("🚀 Server starting on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	if err := app.Listen(":" + port); err != nil {
+		log.Printf("❌ Server failed: %v", err)
+	}
 }
 
 // validateEnvironment validates required environment variables
 func validateEnvironment() error {
 	// Validate critical environment variables
-	requiredVars := []string{"JWT_SECRET", "ENCRYPTION_KEY"}
+	requiredVars := []string{"JWT_SECRET", "ENCRYPTION_KEY", "DATABASE_URL"}
 
 	for _, envVar := range requiredVars {
 		if os.Getenv(envVar) == "" {

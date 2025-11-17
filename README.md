@@ -4,18 +4,23 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 
 ## Project Status
 
-🚧 **In Development** - Milestone 2 in Progress: Foundation - Server Setup
+🚧 **In Development** - Milestone 3 in Progress: Database Layer - Persistence
 
 ### Completed Milestones
+
+**Milestone 2**: Foundation - Server Setup ✅
 - ✅ Task 2.1: Go project initialized with all required dependencies
 - ✅ Task 2.2: Complete project structure created
 - ✅ Task 2.3: Fiber server implemented with health check endpoint
 - ✅ Task 2.4: Environment configuration with validation
 
-### Current Phase
-✅ **Milestone 2 Complete**: Foundation - Server Setup
+**Milestone 3**: Database Layer - Persistence (In Progress)
+- ✅ Task 3.1: PostgreSQL connection implemented with pgx driver
 
-The server is fully operational with health check endpoint, environment configuration, and validation.
+### Current Phase
+🔄 **Milestone 3**: Database Layer - Persistence
+
+The application now features a robust PostgreSQL connection layer with connection pooling, health checks, and graceful shutdown capabilities.
 
 ## Tech Stack
 
@@ -61,15 +66,20 @@ JWT_SECRET=your-secret-key-at-least-32-characters-long
 # Required: Encryption key (exactly 32 bytes for AES-256)
 ENCRYPTION_KEY=12345678901234567890123456789012
 
+# Required: PostgreSQL connection URL
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname?sslmode=disable
+
 # Optional: Server port (defaults to 8080)
 PORT=8080
 
-# Other configurations will be needed later for database and OAuth
+# Optional: Redis URL (will be needed in later milestones)
+REDIS_URL=redis://localhost:6379/0
 ```
 
 **Important**: 
 - `JWT_SECRET` must be at least 32 characters
 - `ENCRYPTION_KEY` must be exactly 32 bytes
+- `DATABASE_URL` must point to a valid PostgreSQL instance
 - Never commit `.env` file to version control
 
 ### 3. Install Dependencies
@@ -95,13 +105,14 @@ go build -o authflow.exe .
 You should see:
 ```
 ✅ Environment variables loaded
+✅ Connected to PostgreSQL
 🚀 Server starting on port 8080
 ```
 
 Test the health endpoint:
 ```bash
 curl http://localhost:8080/health
-# Expected: {"service":"authflow","status":"ok"}
+# Expected: {"database":"ok","service":"authflow","status":"ok"}
 ```
 
 ## Development with Docker
