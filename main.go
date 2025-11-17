@@ -31,6 +31,12 @@ func main() {
 	}
 	defer database.Close()
 
+	// Connect to Redis
+	if err := database.ConnectRedis(); err != nil {
+		log.Fatalf("❌ Redis connection failed: %v", err)
+	}
+	defer database.CloseRedis()
+
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
 		AppName: "AuthFlow v1.0",
@@ -49,17 +55,23 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New())
 
-	// Health check endpoint (now includes database status)
+	// Health check endpoint (now includes database and Redis status)
 	app.Get("/health", func(c *fiber.Ctx) error {
 		dbStatus := "ok"
 		if err := database.Ping(); err != nil {
 			dbStatus = "error"
 		}
 
+		redisStatus := "ok"
+		if err := database.PingRedis(); err != nil {
+			redisStatus = "error"
+		}
+
 		return c.JSON(fiber.Map{
 			"status":   "ok",
 			"service":  "authflow",
 			"database": dbStatus,
+			"redis":    redisStatus,
 		})
 	})
 
@@ -89,7 +101,7 @@ func main() {
 // validateEnvironment validates required environment variables
 func validateEnvironment() error {
 	// Validate critical environment variables
-	requiredVars := []string{"JWT_SECRET", "ENCRYPTION_KEY", "DATABASE_URL"}
+	requiredVars := []string{"JWT_SECRET", "ENCRYPTION_KEY", "DATABASE_URL", "REDIS_URL"}
 
 	for _, envVar := range requiredVars {
 		if os.Getenv(envVar) == "" {

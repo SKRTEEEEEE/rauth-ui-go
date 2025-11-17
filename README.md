@@ -21,6 +21,7 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 - ✅ Task 3.2: Foreign keys, indexes, and triggers configured
 - ✅ Task 3.2: Comprehensive migration tests added
 - ✅ Task 3.3: Go models implemented for all database tables
+- ✅ Task 3.4: Redis cache layer with connection pool and OAuth state management
 
 ### Current Phase
 ✅ **Milestone 3**: Database Layer - Persistence COMPLETED
@@ -32,7 +33,8 @@ The application now features:
 - Foreign key relationships with CASCADE deletes
 - Optimized indexes for query performance
 - Automated `updated_at` triggers
-- Comprehensive test coverage for all database operations
+- Redis cache layer for sessions and OAuth states
+- Comprehensive test coverage for all database and cache operations
 
 ## Tech Stack
 
@@ -84,7 +86,7 @@ DATABASE_URL=postgresql://username:password@localhost:5432/dbname?sslmode=disabl
 # Optional: Server port (defaults to 8080)
 PORT=8080
 
-# Optional: Redis URL (will be needed in later milestones)
+# Required: Redis connection URL
 REDIS_URL=redis://localhost:6379/0
 ```
 
@@ -92,6 +94,7 @@ REDIS_URL=redis://localhost:6379/0
 - `JWT_SECRET` must be at least 32 characters
 - `ENCRYPTION_KEY` must be exactly 32 bytes
 - `DATABASE_URL` must point to a valid PostgreSQL instance
+- `REDIS_URL` must point to a valid Redis instance
 - Never commit `.env` file to version control
 
 ### 3. Install Dependencies
@@ -118,13 +121,14 @@ You should see:
 ```
 ✅ Environment variables loaded
 ✅ Connected to PostgreSQL
+✅ Connected to Redis
 🚀 Server starting on port 8080
 ```
 
 Test the health endpoint:
 ```bash
 curl http://localhost:8080/health
-# Expected: {"database":"ok","service":"authflow","status":"ok"}
+# Expected: {"database":"ok","redis":"ok","service":"authflow","status":"ok"}
 ```
 
 ## Development with Docker
@@ -175,7 +179,8 @@ docker-compose logs -f app
 │   ├── session.go             # Session model
 │   └── oauth.go               # OAuth provider model
 ├── /database                  # Database layer
-│   ├── db.go                  # Database connection
+│   ├── db.go                  # PostgreSQL connection
+│   ├── redis.go               # Redis connection and helpers
 │   ├── migrations.sql         # SQL migrations
 │   └── queries.go             # Database queries
 ├── /middleware                # Middleware functions
@@ -286,9 +291,9 @@ The following tasks are planned:
 1. ✅ **Task 3.1**: PostgreSQL connection with pgx driver
 2. ✅ **Task 3.2**: Database schema and migrations
 3. ✅ **Task 3.3**: Go models implementation
+4. ✅ **Task 3.4**: Redis setup and integration
 
 ### Upcoming Milestones
-4. ⏳ **Milestone 3**: Redis setup (Task 3.4)
 5. ⏳ **Milestone 4**: Admin API - Application Management
 7. ⏳ **Milestone 5**: Google OAuth - First Complete Flow
 8. ⏳ **Milestone 6**: Multi-Provider OAuth - GitHub & Facebook
