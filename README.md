@@ -10,9 +10,12 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 - ✅ Task 2.1: Go project initialized with all required dependencies
 - ✅ Task 2.2: Complete project structure created
 - ✅ Task 2.3: Fiber server implemented with health check endpoint
+- ✅ Task 2.4: Environment configuration with validation
 
 ### Current Phase
-Setting up the foundation for the authentication service with a functional web server.
+✅ **Milestone 2 Complete**: Foundation - Server Setup
+
+The server is fully operational with health check endpoint, environment configuration, and validation.
 
 ## Tech Stack
 
@@ -41,27 +44,61 @@ git clone <repository-url>
 cd rauth-ui
 ```
 
-### 2. Install Dependencies
+### 2. Configure Environment Variables
+
+Copy the example environment file and configure it:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set the required variables:
+
+```env
+# Required: JWT secret (minimum 32 characters)
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+
+# Required: Encryption key (exactly 32 bytes for AES-256)
+ENCRYPTION_KEY=12345678901234567890123456789012
+
+# Optional: Server port (defaults to 8080)
+PORT=8080
+
+# Other configurations will be needed later for database and OAuth
+```
+
+**Important**: 
+- `JWT_SECRET` must be at least 32 characters
+- `ENCRYPTION_KEY` must be exactly 32 bytes
+- Never commit `.env` file to version control
+
+### 3. Install Dependencies
 ```bash
 go mod download
 ```
 
-### 3. Run Tests
+### 4. Run Tests
 ```bash
 go test -v
 ```
 
-### 4. Build the Application
+### 5. Build the Application
 ```bash
 go build -o authflow.exe .
 ```
 
-### 5. Run the Application
+### 6. Run the Application
 ```bash
 ./authflow.exe
 ```
 
-The server will start on port 8080. Test it with:
+You should see:
+```
+✅ Environment variables loaded
+🚀 Server starting on port 8080
+```
+
+Test the health endpoint:
 ```bash
 curl http://localhost:8080/health
 # Expected: {"service":"authflow","status":"ok"}
@@ -216,14 +253,17 @@ docker-compose up -d --build
 
 The following tasks are planned:
 
-1. ✅ **Task 2.1**: Setup Go project (COMPLETED)
-2. ✅ **Task 2.2**: Create project structure (COMPLETED)
-3. ✅ **Task 2.3**: Implement basic Fiber server (COMPLETED)
-4. ⏳ **Task 2.4**: Setup environment configuration
-5. ⏳ **Task 3**: Database Layer - PostgreSQL connection and schema
-6. ⏳ **Task 4**: Admin API - Application Management
-7. ⏳ **Task 5**: Google OAuth - First Complete Flow
-8. ⏳ **Task 6**: Multi-Provider OAuth - GitHub & Facebook
+### Milestone 2: Foundation - Server Setup ✅ COMPLETED
+1. ✅ **Task 2.1**: Setup Go project 
+2. ✅ **Task 2.2**: Create project structure
+3. ✅ **Task 2.3**: Implement basic Fiber server
+4. ✅ **Task 2.4**: Setup environment configuration
+
+### Upcoming Milestones
+5. ⏳ **Milestone 3**: Database Layer - PostgreSQL connection and schema
+6. ⏳ **Milestone 4**: Admin API - Application Management
+7. ⏳ **Milestone 5**: Google OAuth - First Complete Flow
+8. ⏳ **Milestone 6**: Multi-Provider OAuth - GitHub & Facebook
 
 See [AGENTS.md](./AGENTS.md) for detailed development guidelines and complete roadmap.
 

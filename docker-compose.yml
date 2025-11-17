@@ -39,11 +39,16 @@ services:
     container_name: rauth-app
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
       - PORT=8080
       - ENV=development
       - DATABASE_URL=postgresql://${POSTGRES_USER:-rauth}:${POSTGRES_PASSWORD:-PLEASE_SET_PASSWORD}@postgres:5432/${POSTGRES_DB:-rauth}?sslmode=disable
       - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - PLATFORM_URL=${PLATFORM_URL:-http://localhost:8080}
     depends_on:
       postgres:
         condition: service_healthy

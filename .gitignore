@@ -6,6 +6,11 @@ docs/task/
 rauth.exe
 *.test
 *.out
+# Environment
 .env
 .env.*
 !.env.example
+# Logs
+*.log
+tmp/
+dist/
