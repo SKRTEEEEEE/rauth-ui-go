@@ -4,14 +4,15 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 
 ## Project Status
 
-🚧 **In Development** - Milestone 2 Complete: Foundation - Server Setup
+🚧 **In Development** - Milestone 2 in Progress: Foundation - Server Setup
 
 ### Completed Milestones
 - ✅ Task 2.1: Go project initialized with all required dependencies
 - ✅ Task 2.2: Complete project structure created
+- ✅ Task 2.3: Fiber server implemented with health check endpoint
 
 ### Current Phase
-Setting up the foundation for the authentication service.
+Setting up the foundation for the authentication service with a functional web server.
 
 ## Tech Stack
 
@@ -52,17 +53,30 @@ go test -v
 
 ### 4. Build the Application
 ```bash
-go build -o rauth .
+go build -o authflow.exe .
 ```
 
 ### 5. Run the Application
 ```bash
-./rauth
+./authflow.exe
+```
+
+The server will start on port 8080. Test it with:
+```bash
+curl http://localhost:8080/health
+# Expected: {"service":"authflow","status":"ok"}
 ```
 
 ## Development with Docker
 
-### Start PostgreSQL and Redis
+### Start All Services (App + Database + Redis)
+```bash
+docker-compose up -d --build
+```
+
+The application will be available at `http://localhost:8080`
+
+### Start Only PostgreSQL and Redis
 ```bash
 docker-compose up -d postgres redis
 ```
@@ -75,6 +89,8 @@ docker-compose down
 ### View Logs
 ```bash
 docker-compose logs -f
+# or for specific service:
+docker-compose logs -f app
 ```
 
 ## Project Structure
@@ -202,7 +218,7 @@ The following tasks are planned:
 
 1. ✅ **Task 2.1**: Setup Go project (COMPLETED)
 2. ✅ **Task 2.2**: Create project structure (COMPLETED)
-3. ⏳ **Task 2.3**: Implement basic Fiber server
+3. ✅ **Task 2.3**: Implement basic Fiber server (COMPLETED)
 4. ⏳ **Task 2.4**: Setup environment configuration
 5. ⏳ **Task 3**: Database Layer - PostgreSQL connection and schema
 6. ⏳ **Task 4**: Admin API - Application Management

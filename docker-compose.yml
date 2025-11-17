@@ -31,28 +31,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # Go Application (will be added in future tasks)
-  # Uncomment when main.go is implemented
-  # app:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: rauth-app
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - PORT=8080
-  #     - ENV=development
-  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
-  #     - REDIS_URL=redis://redis:6379/0
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   volumes:
-  #     - .:/app
-  #   restart: unless-stopped
+  # Go Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rauth-app
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-rauth}:${POSTGRES_PASSWORD:-PLEASE_SET_PASSWORD}@postgres:5432/${POSTGRES_DB:-rauth}?sslmode=disable
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
