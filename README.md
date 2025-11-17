@@ -20,6 +20,7 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 - ✅ Task 3.2: SQL migrations system implemented
 - ✅ Task 3.2: Foreign keys, indexes, and triggers configured
 - ✅ Task 3.2: Comprehensive migration tests added
+- ✅ Task 3.3: Go models implemented for all database tables
 
 ### Current Phase
 ✅ **Milestone 3**: Database Layer - Persistence COMPLETED
@@ -284,9 +285,9 @@ The following tasks are planned:
 ### Milestone 3: Database Layer - Persistence ✅ COMPLETED
 1. ✅ **Task 3.1**: PostgreSQL connection with pgx driver
 2. ✅ **Task 3.2**: Database schema and migrations
+3. ✅ **Task 3.3**: Go models implementation
 
 ### Upcoming Milestones
-3. ⏳ **Milestone 3**: Go models implementation (Task 3.3)
 4. ⏳ **Milestone 3**: Redis setup (Task 3.4)
 5. ⏳ **Milestone 4**: Admin API - Application Management
 7. ⏳ **Milestone 5**: Google OAuth - First Complete Flow

@@ -1,0 +1,150 @@
+feat(models): implement complete Go models with comprehensive test coverage
+
+Implemented all Go models (structs) that map to database tables with proper
+JSON and database tags, nullable field handling, and helper methods. This
+completes Task 3.3 of Milestone 3 (Database Layer - Persistence).
+
+Changes:
+
+**Models Implemented:**
+
+1. models/application.go
+   - Application struct with ID, Name, APIKey, AllowedRedirectURIs, CORSOrigins
+   - OAuthProvider struct for provider configuration per application
+   - CreateApplicationRequest and UpdateApplicationRequest DTOs
+   - GenerateAPIKey() helper function
+   - HasRedirectURI() and HasCORSOrigin() validation methods
+   - Proper use of string arrays for PostgreSQL array columns
+   - Time fields for created_at and updated_at tracking
+
+2. models/user.go
+   - User struct with nullable fields (Email, Name, AvatarURL) using pointers
+   - EmailVerified boolean flag for verification status
+   - UpdateUserRequest DTO with omitempty tags for partial updates
+   - UserWithIdentities composite struct for user + identities queries
+   - Proper JSON serialization with nil handling
+
+3. models/oauth.go
+   - Identity struct for OAuth provider linkage to users
+   - Sensitive fields (AccessToken, RefreshToken) marked with json:"-"
+   - OAuthUserInfo struct for provider user data
+   - OAuthState struct for OAuth flow state management
+   - Provider constants: ProviderGoogle, ProviderGitHub, ProviderFacebook, ProviderMicrosoft
+   - IsValidProvider() validation function
+   - ValidProviders() helper returning all supported providers
+   - TokenExpiresAt nullable timestamp for token expiration
+
+4. models/session.go
+   - Session struct with sensitive TokenHash field (json:"-")
+   - Optional IPAddress and UserAgent tracking
+   - ExpiresAt, CreatedAt, and LastUsedAt timestamps
+   - JWTClaims struct with UserID, AppID, SessionID, Email, IssuedAt, ExpiresAt
+   - SessionWithUser composite struct for session + user queries
+   - Email field in claims marked as omitempty
+
+**Test Coverage:**
+
+Created comprehensive unit tests for all models:
+
+1. models/application_test.go (150+ lines)
+   - TestApplication_JSONSerialization
+   - TestApplication_HasRedirectURI (with subtests)
+   - TestApplication_HasCORSOrigin (with subtests)
+   - TestApplication_HasCORSOrigin_Wildcard
+   - TestGenerateAPIKey
+   - TestOAuthProvider_JSONSerialization
+   - TestCreateApplicationRequest_Validation
+   - TestUpdateApplicationRequest_PartialUpdate
+
+2. models/user_test.go (170+ lines)
+   - TestUser_JSONSerialization
+   - TestUser_NullableFields
+   - TestUpdateUserRequest_JSONSerialization
+   - TestUpdateUserRequest_PartialUpdate
+   - TestUserWithIdentities_JSONSerialization
+
+3. models/oauth_test.go (180+ lines)
+   - TestIdentity_JSONSerialization (verifies sensitive fields hidden)
+   - TestIsValidProvider (all provider variants)
+   - TestValidProviders
+   - TestOAuthUserInfo_JSONSerialization
+   - TestOAuthState_JSONSerialization
+   - TestProviderConstants
+
+4. models/session_test.go (160+ lines)
+   - TestSession_JSONSerialization (verifies TokenHash hidden)
+   - TestSession_NullableFields
+   - TestJWTClaims_JSONSerialization
+   - TestJWTClaims_OptionalEmail
+   - TestSessionWithUser_JSONSerialization
+   - TestSession_ExpirationValidation
+
+**Test Results:**
+- 28 tests total
+- All tests passing ✓
+- Complete coverage of JSON serialization
+- Validation of sensitive field exclusion
+- Nullable field handling verification
+- Helper function testing
+
+**Key Design Decisions:**
+
+1. Pointer vs Value Types:
+   - Pointers (*string, *time.Time) for nullable database fields
+   - Values (string, time.Time, bool) for NOT NULL fields
+   - Arrays ([]string) for PostgreSQL array columns
+
+2. JSON Tags:
+   - json:"field_name" for standard serialization
+   - json:"-" for sensitive fields (tokens, hashes)
+   - json:"field,omitempty" for optional request fields
+
+3. Database Tags:
+   - db:"column_name" for pgx scanning
+   - Matches exact column names from migrations.sql
+
+4. Type Safety:
+   - uuid.UUID for all ID fields (not strings)
+   - time.Time for all timestamp fields
+   - Provider constants to prevent typos
+
+5. Security:
+   - AccessToken, RefreshToken, TokenHash never exposed in JSON
+   - Proper use of omitempty for partial updates
+   - Email marked as omitempty in JWT claims
+
+**Documentation:**
+- All structs documented with Spanish comments
+- Field comments explain purpose
+- Helper functions documented
+- Test files provide usage examples
+
+**Validation:**
+- ✅ go build ./models/... succeeds
+- ✅ go vet ./models/... passes
+- ✅ go fmt ./models/... applied
+- ✅ go test ./models/... -v all pass (28/28)
+- ✅ Docker build succeeds
+- ✅ Full application compilation succeeds
+
+**Updated Files:**
+- README.md (added Task 3.3 to completed milestones)
+- go.mod (tidied dependencies)
+- models/application.go (67 lines)
+- models/user.go (32 lines)
+- models/oauth.go (65 lines)
+- models/session.go (36 lines)
+
+**New Files:**
+- models/application_test.go (150 lines)
+- models/user_test.go (170 lines)
+- models/oauth_test.go (180 lines)
+- models/session_test.go (160 lines)
+
+This implementation provides a solid foundation for database operations and
+API request/response handling in upcoming milestones.
+
+Closes #3
+
+CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
+Co-authored-by: Agent666 <agent666@skrte.ai>
