@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"rauth/database"
+	"rauth/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -72,6 +73,22 @@ func main() {
 			"service":  "authflow",
 			"database": dbStatus,
 			"redis":    redisStatus,
+		})
+	})
+
+	// Admin routes (protected with API key)
+	adminRoutes := app.Group("/api/v1/admin")
+	adminRoutes.Use(middleware.RequireAPIKey)
+
+	// Test endpoint to verify API key middleware
+	adminRoutes.Get("/test", func(c *fiber.Ctx) error {
+		app, _ := middleware.GetApplication(c)
+		return c.JSON(fiber.Map{
+			"message": "API key válida",
+			"app": fiber.Map{
+				"id":   app.ID,
+				"name": app.Name,
+			},
 		})
 	})
 
