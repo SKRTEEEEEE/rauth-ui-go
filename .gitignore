@@ -3,7 +3,7 @@ AGENTS.md
 docs/task/
 # Go binaries
 *.exe
-authflow.exe
+rauth.exe
 *.test
 *.out
 .env

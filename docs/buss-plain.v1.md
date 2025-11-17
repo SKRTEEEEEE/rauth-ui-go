@@ -34,8 +34,8 @@ Una API y SDK que permite a cualquier aplicación tener autenticación completa 
 #### 🚀 Setup Instantáneo
 ```javascript
 // 3 líneas de código
-import AuthFlow from '@rauth/sdk';
-const auth = new AuthFlow('tu_api_key');
+import RAuth from '@rauth/sdk';
+const auth = new RAuth('tu_api_key');
 auth.signIn.oauth({ provider: 'google' });
 ```
 
@@ -44,7 +44,7 @@ auth.signIn.oauth({ provider: 'google' });
 **Modo Shared (Plan Starter)**
 - Usa nuestras credenciales OAuth centralizadas
 - Setup en 5 minutos
-- Usuario ve "AuthFlow" en el consentimiento
+- Usuario ve "RAuth" en el consentimiento
 - Perfecto para MVPs y startups
 
 **Modo Custom (Plan Enterprise)**
@@ -120,7 +120,7 @@ auth.signIn.oauth({ provider: 'google' });
 - 2 proveedores OAuth (Google + GitHub)
 - Modo Shared únicamente
 - Soporte por email (48h respuesta)
-- Branding "Powered by AuthFlow"
+- Branding "Powered by RAuth"
 
 *Objetivo: Adquisición y prueba del producto*
 
@@ -400,9 +400,9 @@ auth.signIn.oauth({ provider: 'google' });
 
 ## 📞 Contacto
 
-**Website**: authflow.dev  
-**Email**: founders@authflow.dev  
-**GitHub**: github.com/authflow  
+**Website**: rauth.dev  
+**Email**: founders@rauth.dev  
+**GitHub**: github.com/rauth  
 **Twitter**: @authflow_dev  
 
 ---
