@@ -19,6 +19,9 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
+# Ensure migrations file is accessible
+RUN ls -la database/migrations.sql
+
 # Final stage - minimal runtime image
 FROM alpine:latest
 
@@ -33,6 +36,9 @@ WORKDIR /root/
 
 # Copy binary from builder
 COPY --from=builder /app/main .
+
+# Copy database migrations
+COPY --from=builder /app/database/migrations.sql ./database/migrations.sql
 
 # Change ownership
 RUN chown -R appuser:appgroup /root/
