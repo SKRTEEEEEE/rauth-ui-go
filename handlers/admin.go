@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"rauth/database"
 	"rauth/models"
@@ -308,6 +309,114 @@ func ListAppUsers(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(users)
+}
+
+// ListOAuthProviders lists OAuth providers for an application
+// GET /api/v1/admin/apps/:id/oauth
+func ListOAuthProviders(c *fiber.Ctx) error {
+	appID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid application ID",
+		})
+	}
+
+	ctx := context.Background()
+
+	query := `
+		SELECT id, app_id, provider, enabled, created_at, updated_at
+		FROM oauth_providers
+		WHERE app_id = $1
+		ORDER BY provider
+	`
+
+	rows, err := database.DB.Query(ctx, query, appID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch providers",
+		})
+	}
+	defer rows.Close()
+
+	providers := []models.OAuthProvider{}
+	for rows.Next() {
+		var provider models.OAuthProvider
+		err := rows.Scan(
+			&provider.ID,
+			&provider.AppID,
+			&provider.Provider,
+			&provider.Enabled,
+			&provider.CreatedAt,
+			&provider.UpdatedAt,
+		)
+		if err != nil {
+			continue
+		}
+		providers = append(providers, provider)
+	}
+
+	return c.JSON(providers)
+}
+
+// ToggleOAuthProvider enables/disables an OAuth provider
+// PATCH /api/v1/admin/apps/:id/oauth/:provider
+func ToggleOAuthProvider(c *fiber.Ctx) error {
+	appID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid application ID",
+		})
+	}
+
+	provider := c.Params("provider")
+	if !models.IsValidProvider(provider) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid provider. Valid providers: " +
+				strings.Join(models.ValidProviders(), ", "),
+		})
+	}
+
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	ctx := context.Background()
+
+	query := `
+		UPDATE oauth_providers
+		SET enabled = $1, updated_at = NOW()
+		WHERE app_id = $2 AND provider = $3
+		RETURNING id, app_id, provider, enabled, created_at, updated_at
+	`
+
+	var oauthProvider models.OAuthProvider
+	err = database.DB.QueryRow(ctx, query, req.Enabled, appID, provider).Scan(
+		&oauthProvider.ID,
+		&oauthProvider.AppID,
+		&oauthProvider.Provider,
+		&oauthProvider.Enabled,
+		&oauthProvider.CreatedAt,
+		&oauthProvider.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "Provider configuration not found",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update provider",
+		})
+	}
+
+	return c.JSON(oauthProvider)
 }
 
 // ============================================

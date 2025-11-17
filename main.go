@@ -89,6 +89,10 @@ func main() {
 	adminRoutes.Delete("/apps/:id", handlers.DeleteApp)
 	adminRoutes.Get("/apps/:id/users", handlers.ListAppUsers)
 
+	// OAuth provider management endpoints
+	adminRoutes.Get("/apps/:id/oauth", handlers.ListOAuthProviders)
+	adminRoutes.Patch("/apps/:id/oauth/:provider", handlers.ToggleOAuthProvider)
+
 	// Test endpoint to verify API key middleware
 	adminRoutes.Get("/test", func(c *fiber.Ctx) error {
 		app, _ := middleware.GetApplication(c)
