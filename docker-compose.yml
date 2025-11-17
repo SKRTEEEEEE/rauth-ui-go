@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: authflow-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-authflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-PLEASE_SET_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-authflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-authflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: authflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Go Application (will be added in future tasks)
+  # Uncomment when main.go is implemented
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: authflow-app
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - PORT=8080
+  #     - ENV=development
+  #     - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+  #     - REDIS_URL=redis://redis:6379/0
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - .:/app
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

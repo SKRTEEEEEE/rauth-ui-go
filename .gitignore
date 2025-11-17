@@ -1,3 +1,11 @@
 # AI
 AGENTS.md
 docs/task/
+# Go binaries
+*.exe
+authflow.exe
+*.test
+*.out
+.env
+.env.*
+!.env.example
