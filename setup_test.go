@@ -25,8 +25,8 @@ func TestGoModContent(t *testing.T) {
 	contentStr := string(content)
 
 	// Check module name
-	if !strings.Contains(contentStr, "module authflow") {
-		t.Error("go.mod does not contain correct module name 'authflow'")
+	if !strings.Contains(contentStr, "module rauth") {
+		t.Error("go.mod does not contain correct module name 'rauth'")
 	}
 
 	// Check Go version (should be 1.21 or higher)
@@ -108,24 +108,70 @@ func TestGoListModules(t *testing.T) {
 	}
 
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "authflow") {
-		t.Error("Module list does not contain authflow")
+	if !strings.Contains(outputStr, "rauth") {
+		t.Error("Module list does not contain rauth")
 	}
 }
 
 // TestProjectStructure verifies basic project structure exists
 func TestProjectStructure(t *testing.T) {
-	// This test prepares for future structure validation
-	// For now, just check if we're in the right directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Failed to get working directory: %v", err)
+	// Definir estructura esperada
+	expectedDirs := []string{
+		"handlers",
+		"models",
+		"database",
+		"middleware",
+		"oauth",
+		"utils",
+		"docs",
 	}
 
-	// Check if go.mod is in current directory
-	goModPath := filepath.Join(cwd, "go.mod")
-	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
-		t.Fatal("go.mod not found in current directory")
+	expectedFiles := []string{
+		"main.go",
+		".env.example",
+		"handlers/auth.go",
+		"handlers/users.go",
+		"handlers/admin.go",
+		"handlers/webhooks.go",
+		"models/application.go",
+		"models/user.go",
+		"models/session.go",
+		"models/oauth.go",
+		"database/db.go",
+		"database/migrations.sql",
+		"database/queries.go",
+		"middleware/auth.go",
+		"middleware/apikey.go",
+		"middleware/cors.go",
+		"oauth/google.go",
+		"oauth/github.go",
+		"oauth/facebook.go",
+		"utils/jwt.go",
+		"utils/crypto.go",
+		"utils/email.go",
+		"utils/azure.go",
+		"docs/API.md",
+	}
+
+	// Verificar carpetas
+	for _, dir := range expectedDirs {
+		path := filepath.Join(".", dir)
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Errorf("Carpeta no existe: %s - Error: %v", dir, err)
+			continue
+		}
+		if !info.IsDir() {
+			t.Errorf("%s existe pero no es una carpeta", dir)
+		}
+	}
+
+	// Verificar archivos
+	for _, file := range expectedFiles {
+		path := filepath.Join(".", file)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("Archivo no existe: %s", file)
+		}
 	}
 }
 

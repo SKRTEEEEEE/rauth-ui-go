@@ -1,13 +1,14 @@
-# AuthFlow - Authentication as a Service
+# RAuth - Authentication as a Service
 
 A monolithic backend service built in Go that provides authentication-as-a-service (similar to Clerk). It allows clients to integrate OAuth login (Google, GitHub, Facebook, etc.) into their applications through a simple SDK, without managing OAuth credentials themselves.
 
 ## Project Status
 
-🚧 **In Development** - Task 2 Complete: Go Module Setup
+🚧 **In Development** - Milestone 2 Complete: Foundation - Server Setup
 
 ### Completed Milestones
-- ✅ Task 2: Go project initialized with all required dependencies
+- ✅ Task 2.1: Go project initialized with all required dependencies
+- ✅ Task 2.2: Complete project structure created
 
 ### Current Phase
 Setting up the foundation for the authentication service.
@@ -51,12 +52,12 @@ go test -v
 
 ### 4. Build the Application
 ```bash
-go build -o authflow .
+go build -o rauth .
 ```
 
 ### 5. Run the Application
 ```bash
-./authflow
+./rauth
 ```
 
 ## Development with Docker
@@ -80,16 +81,44 @@ docker-compose logs -f
 
 ```
 /
-├── main.go              # Application entry point
-├── go.mod              # Go module definition
-├── go.sum              # Dependency checksums
-├── Dockerfile          # Multi-stage Docker build
-├── docker-compose.yml  # Docker services configuration
-├── .env.example        # Example configuration (to be created)
-├── setup_test.go       # Setup validation tests
-└── docs/               # Documentation
-    ├── task/          # Task tracking
-    └── AGENTS.md      # Development guidelines
+├── main.go                    # Application entry point
+├── go.mod                     # Go module definition
+├── go.sum                     # Dependency checksums
+├── Dockerfile                 # Multi-stage Docker build
+├── docker-compose.yml         # Docker services configuration
+├── .env.example               # Environment variables template
+├── setup_test.go              # Setup validation tests
+├── /handlers                  # HTTP handlers
+│   ├── auth.go                # OAuth authentication endpoints
+│   ├── users.go               # User management endpoints
+│   ├── admin.go               # Admin dashboard endpoints
+│   └── webhooks.go            # Webhook handling
+├── /models                    # Database models
+│   ├── application.go         # Application/client model
+│   ├── user.go                # User model
+│   ├── session.go             # Session model
+│   └── oauth.go               # OAuth provider model
+├── /database                  # Database layer
+│   ├── db.go                  # Database connection
+│   ├── migrations.sql         # SQL migrations
+│   └── queries.go             # Database queries
+├── /middleware                # Middleware functions
+│   ├── auth.go                # JWT authentication
+│   ├── apikey.go              # API key validation
+│   └── cors.go                # CORS handling
+├── /oauth                     # OAuth provider implementations
+│   ├── google.go              # Google OAuth
+│   ├── github.go              # GitHub OAuth
+│   └── facebook.go            # Facebook OAuth
+├── /utils                     # Helper functions
+│   ├── jwt.go                 # JWT utilities
+│   ├── crypto.go              # Encryption/hashing
+│   ├── email.go               # Email sending
+│   └── azure.go               # Azure Blob Storage
+└── /docs                      # Documentation
+    ├── API.md                 # API documentation
+    ├── task/                  # Task tracking
+    └── buss-plain.v1.md       # Business plan
 ```
 
 ## Testing
@@ -145,14 +174,14 @@ go mod verify
 go list -m all
 
 # Build for production
-go build -ldflags="-s -w" -o authflow .
+go build -ldflags="-s -w" -o rauth .
 ```
 
 ## Docker Commands
 
 ```bash
 # Build Docker image
-docker build -t authflow:latest .
+docker build -t rauth:latest .
 
 # Run with docker-compose
 docker-compose up -d
@@ -171,14 +200,14 @@ docker-compose up -d --build
 
 The following tasks are planned:
 
-1. ✅ **Task 2**: Setup Go project (COMPLETED)
-2. 🔄 **Task 3**: Create project structure
-3. ⏳ **Task 4**: Implement basic Fiber server
-4. ⏳ **Task 5**: Setup environment configuration
-5. ⏳ **Task 6**: PostgreSQL connection
-6. ⏳ **Task 7**: Database schema and migrations
-7. ⏳ **Task 8**: Implement Go models
-8. ⏳ **Task 9**: Redis setup
+1. ✅ **Task 2.1**: Setup Go project (COMPLETED)
+2. ✅ **Task 2.2**: Create project structure (COMPLETED)
+3. ⏳ **Task 2.3**: Implement basic Fiber server
+4. ⏳ **Task 2.4**: Setup environment configuration
+5. ⏳ **Task 3**: Database Layer - PostgreSQL connection and schema
+6. ⏳ **Task 4**: Admin API - Application Management
+7. ⏳ **Task 5**: Google OAuth - First Complete Flow
+8. ⏳ **Task 6**: Multi-Provider OAuth - GitHub & Facebook
 
 See [AGENTS.md](./AGENTS.md) for detailed development guidelines and complete roadmap.
 
