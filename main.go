@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"rauth/database"
+	"rauth/handlers"
 	"rauth/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -79,6 +80,14 @@ func main() {
 	// Admin routes (protected with API key)
 	adminRoutes := app.Group("/api/v1/admin")
 	adminRoutes.Use(middleware.RequireAPIKey)
+
+	// Application management endpoints
+	adminRoutes.Post("/apps", handlers.CreateApp)
+	adminRoutes.Get("/apps", handlers.ListApps)
+	adminRoutes.Get("/apps/:id", handlers.GetApp)
+	adminRoutes.Patch("/apps/:id", handlers.UpdateApp)
+	adminRoutes.Delete("/apps/:id", handlers.DeleteApp)
+	adminRoutes.Get("/apps/:id/users", handlers.ListAppUsers)
 
 	// Test endpoint to verify API key middleware
 	adminRoutes.Get("/test", func(c *fiber.Ctx) error {
