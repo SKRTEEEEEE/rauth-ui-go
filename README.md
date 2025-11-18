@@ -2,39 +2,6 @@
 
 A monolithic backend service built in Go that provides authentication-as-a-service (similar to Clerk). It allows clients to integrate OAuth login (Google, GitHub, Facebook, etc.) into their applications through a simple SDK, without managing OAuth credentials themselves.
 
-## Project Status
-
-🚧 **In Development** - Milestone 4 Completed: Admin API - Application Management
-
-### Completed Milestones
-
-**Milestone 2**: Foundation - Server Setup ✅
-- ✅ Task 2.1: Go project initialized with all required dependencies
-- ✅ Task 2.2: Complete project structure created
-- ✅ Task 2.3: Fiber server implemented with health check endpoint
-- ✅ Task 2.4: Environment configuration with validation
-
-**Milestone 3**: Database Layer - Persistence ✅
-- ✅ Task 3.1: PostgreSQL connection implemented with pgx driver
-- ✅ Task 3.2: Database schema created with all tables (applications, oauth_providers, users, identities, sessions)
-- ✅ Task 3.3: Go models implemented for all database tables
-- ✅ Task 3.4: Redis cache layer with connection pool and OAuth state management
-
-**Milestone 4**: Admin API - Application Management ✅
-- ✅ Task 4.1: API Key authentication middleware
-- ✅ Task 4.2: CRUD endpoints for applications
-- ✅ Task 4.3: OAuth provider toggle endpoints
-
-### Current Phase
-✅ **Milestone 4**: Admin API - Application Management COMPLETED
-
-The application now features:
-- Secure API key authentication for admin endpoints
-- Complete CRUD operations for managing applications
-- OAuth provider configuration (enable/disable Google, GitHub, Facebook, Microsoft)
-- Comprehensive test coverage with 10+ integration tests
-- Production-ready error handling and validation
-- Interactive API testing workflow with `.http` files
 
 ## Tech Stack
 
@@ -131,86 +98,7 @@ curl http://localhost:8080/health
 # Expected: {"database":"ok","redis":"ok","service":"authflow","status":"ok"}
 ```
 
-## API Testing
 
-The project includes interactive API testing files that simulate the complete OAuth workflow:
-
-### Quick Test with REST Client
-
-1. Install [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension for VSCode
-2. Open `api-workflow.http` in VSCode
-3. Click "Send Request" on each HTTP block to test endpoints
-
-```bash
-# View the complete workflow
-code api-workflow.http
-
-# Read the testing guide
-code API_TESTING_GUIDE.md
-```
-
-### Available Test Flows
-
-The `api-workflow.http` file includes:
-
-1. **Admin Setup** - Create and configure applications
-2. **OAuth Configuration** - Enable/disable providers (Google, GitHub, Facebook, Microsoft)
-3. **OAuth Flow** - End-to-end authentication workflow (partial, requires Milestone 5)
-4. **Session Management** - Token validation and refresh (requires Milestone 5)
-5. **User Management** - Profile operations (requires Milestone 7)
-6. **Error Testing** - Validation and error handling
-
-### Example: Enable Google OAuth
-
-```http
-### Create Application
-POST http://localhost:8080/api/v1/admin/apps
-X-API-Key: test-api-key-12345
-Content-Type: application/json
-
-{
-  "name": "My App",
-  "allowed_redirect_uris": ["http://localhost:3000/callback"],
-  "cors_origins": ["http://localhost:3000"]
-}
-
-### Enable Google OAuth for the app
-PATCH http://localhost:8080/api/v1/admin/apps/{app_id}/oauth/google
-X-API-Key: test-api-key-12345
-Content-Type: application/json
-
-{
-  "enabled": true
-}
-```
-
-See `API_TESTING_GUIDE.md` for detailed instructions.
-
-## Development with Docker
-
-### Start All Services (App + Database + Redis)
-```bash
-docker-compose up -d --build
-```
-
-The application will be available at `http://localhost:8080`
-
-### Start Only PostgreSQL and Redis
-```bash
-docker-compose up -d postgres redis
-```
-
-### Stop Services
-```bash
-docker-compose down
-```
-
-### View Logs
-```bash
-docker-compose logs -f
-# or for specific service:
-docker-compose logs -f app
-```
 
 ## Project Structure
 
@@ -283,6 +171,8 @@ go test -v -cover
 - ✅ Build compilation
 - ✅ Go version check
 
+### [API HTTP Testing](./docs/API_TESTING_GUIDE.md)
+
 ## Dependencies
 
 All required dependencies are managed through `go.mod`:
@@ -315,53 +205,7 @@ go list -m all
 go build -ldflags="-s -w" -o rauth .
 ```
 
-## Docker Commands
 
-```bash
-# Build Docker image
-docker build -t rauth:latest .
-
-# Run with docker-compose
-docker-compose up -d
-
-# Stop all services
-docker-compose down
-
-# View logs
-docker-compose logs -f
-
-# Rebuild services
-docker-compose up -d --build
-```
-
-## Next Steps
-
-The following tasks are planned:
-
-### Milestone 2: Foundation - Server Setup ✅ COMPLETED
-1. ✅ **Task 2.1**: Setup Go project 
-2. ✅ **Task 2.2**: Create project structure
-3. ✅ **Task 2.3**: Implement basic Fiber server
-4. ✅ **Task 2.4**: Setup environment configuration
-
-### Milestone 3: Database Layer - Persistence ✅ COMPLETED
-1. ✅ **Task 3.1**: PostgreSQL connection with pgx driver
-2. ✅ **Task 3.2**: Database schema and migrations
-3. ✅ **Task 3.3**: Go models implementation
-4. ✅ **Task 3.4**: Redis setup and integration
-
-### Milestone 4: Admin API - Application Management ✅ COMPLETED
-1. ✅ **Task 4.1**: API Key authentication middleware
-2. ✅ **Task 4.2**: CRUD operations for applications
-3. ✅ **Task 4.3**: OAuth provider toggle endpoints
-
-### Upcoming Milestones
-5. ⏳ **Milestone 5**: Google OAuth - First Complete Flow
-6. ⏳ **Milestone 6**: Multi-Provider OAuth - GitHub & Facebook
-7. ⏳ **Milestone 7**: User Management - Profile & Sessions
-8. ⏳ **Milestone 8**: Production Ready - Deploy & Secure
-
-See [AGENTS.md](./AGENTS.md) for detailed development guidelines and complete roadmap.
 
 ## Contributing
 
