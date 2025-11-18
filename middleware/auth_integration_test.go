@@ -254,7 +254,7 @@ func TestRequireAuth_Integration_ValidToken_ExpiredSession(t *testing.T) {
 	resp, err := app.Test(req, -1)
 
 	require.NoError(t, err)
-	
+
 	// Si el token es rechazado porque la sesión expiró
 	if resp.StatusCode == fiber.StatusUnauthorized {
 		body, _ := io.ReadAll(resp.Body)

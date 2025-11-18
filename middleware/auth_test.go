@@ -278,8 +278,6 @@ func TestGetSession_InvalidSessionType(t *testing.T) {
 	assert.Equal(t, fiber.StatusInternalServerError, resp.StatusCode)
 }
 
-
-
 func TestRequireAuth_Integration_EndToEnd(t *testing.T) {
 	// Este test requiere configuración completa de DB
 	// Se implementará en auth_integration_test.go

@@ -436,6 +436,149 @@ func TestGetOAuthState_ExpiredState(t *testing.T) {
 	assert.Equal(t, redis.Nil, err, "Should return redis.Nil error")
 }
 
+func TestOAuthState_SingleUse(t *testing.T) {
+	// Setup
+	CloseRedis()
+	err := ConnectRedis()
+	require.NoError(t, err)
+	defer CloseRedis()
+
+	ctx := context.Background()
+
+	// Test data
+	type OAuthStateData struct {
+		AppID       uuid.UUID `json:"app_id"`
+		RedirectURI string    `json:"redirect_uri"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+
+	stateKey := uuid.New().String()
+	stateData := OAuthStateData{
+		AppID:       uuid.New(),
+		RedirectURI: "http://localhost:3000/callback",
+		CreatedAt:   time.Now(),
+	}
+
+	// Save OAuth state
+	err = SaveOAuthState(ctx, stateKey, stateData)
+	require.NoError(t, err)
+
+	// First retrieval should work
+	var retrieved1 OAuthStateData
+	err = GetOAuthState(ctx, stateKey, &retrieved1)
+	require.NoError(t, err, "First GetOAuthState should succeed")
+	assert.Equal(t, stateData.AppID, retrieved1.AppID)
+
+	// Second retrieval should fail (single use)
+	var retrieved2 OAuthStateData
+	err = GetOAuthState(ctx, stateKey, &retrieved2)
+	assert.Error(t, err, "Second GetOAuthState should fail")
+	assert.Equal(t, redis.Nil, err, "Error should be redis.Nil")
+}
+
+func TestOAuthState_MultipleStates(t *testing.T) {
+	// Setup
+	CloseRedis()
+	err := ConnectRedis()
+	require.NoError(t, err)
+	defer CloseRedis()
+
+	ctx := context.Background()
+
+	// Test data
+	type OAuthStateData struct {
+		AppID       uuid.UUID `json:"app_id"`
+		RedirectURI string    `json:"redirect_uri"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+
+	// Create multiple states
+	states := make(map[string]OAuthStateData)
+	for i := 0; i < 5; i++ {
+		stateKey := uuid.New().String()
+		stateData := OAuthStateData{
+			AppID:       uuid.New(),
+			RedirectURI: "http://localhost:3000/callback",
+			CreatedAt:   time.Now(),
+		}
+		states[stateKey] = stateData
+
+		err := SaveOAuthState(ctx, stateKey, stateData)
+		require.NoError(t, err, "SaveOAuthState should not return error")
+	}
+
+	// Verify all states can be retrieved
+	for stateKey, expected := range states {
+		var retrieved OAuthStateData
+		err := GetOAuthState(ctx, stateKey, &retrieved)
+		require.NoError(t, err, "GetOAuthState should not return error")
+		assert.Equal(t, expected.AppID, retrieved.AppID, "AppID should match")
+		assert.Equal(t, expected.RedirectURI, retrieved.RedirectURI, "RedirectURI should match")
+	}
+
+	// Verify all states are deleted after retrieval
+	for stateKey := range states {
+		fullKey := OAuthStatePrefix + stateKey
+		exists, err := Exists(ctx, fullKey)
+		require.NoError(t, err)
+		assert.False(t, exists, "State should be deleted after retrieval")
+	}
+}
+
+func TestOAuthState_ConcurrentAccess(t *testing.T) {
+	// Setup
+	CloseRedis()
+	err := ConnectRedis()
+	require.NoError(t, err)
+	defer CloseRedis()
+
+	ctx := context.Background()
+
+	// Test data
+	type OAuthStateData struct {
+		AppID       uuid.UUID `json:"app_id"`
+		RedirectURI string    `json:"redirect_uri"`
+		CreatedAt   time.Time `json:"created_at"`
+	}
+
+	stateKey := uuid.New().String()
+	stateData := OAuthStateData{
+		AppID:       uuid.New(),
+		RedirectURI: "http://localhost:3000/callback",
+		CreatedAt:   time.Now(),
+	}
+
+	// Save state
+	err = SaveOAuthState(ctx, stateKey, stateData)
+	require.NoError(t, err)
+
+	// Try to retrieve concurrently
+	results := make(chan error, 3)
+
+	for i := 0; i < 3; i++ {
+		go func() {
+			var retrieved OAuthStateData
+			err := GetOAuthState(ctx, stateKey, &retrieved)
+			results <- err
+		}()
+	}
+
+	// Collect results
+	var successCount, failCount int
+	for i := 0; i < 3; i++ {
+		err := <-results
+		if err == nil {
+			successCount++
+		} else {
+			failCount++
+		}
+	}
+
+	// Only one should succeed (single use)
+	assert.Equal(t, 1, successCount, "Only one concurrent access should succeed")
+	assert.Equal(t, 2, failCount, "Other concurrent accesses should fail")
+}
+
 func TestCloseRedis(t *testing.T) {
 	// Setup
 	err := ConnectRedis()
