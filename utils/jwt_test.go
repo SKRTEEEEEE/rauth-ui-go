@@ -13,8 +13,9 @@ import (
 
 func TestMain(m *testing.M) {
 	// Set up test environment variables
-	// NOTE: This is a test-only value, not a real secret
-	testSecret := "test-jwt-key-for-unit-testing-only-minimum-32-characters"
+	// gitleaks:allow - This is a deliberate test-only fake secret for unit testing
+	// NOT A REAL SECRET - Using obvious fake value that meets minimum length requirement
+	testSecret := "FAKE_TEST_KEY_NOT_A_REAL_SECRET_MINIMUM_32_CHARS_REQUIRED"
 	os.Setenv("JWT_SECRET", testSecret)
 	os.Setenv("JWT_EXPIRATION_HOURS", "24")
 	
@@ -160,8 +161,9 @@ func TestValidateJWTWithWrongSecret(t *testing.T) {
 	require.NoError(t, err)
 	
 	// Change secret temporarily (test value only)
+	// gitleaks:allow - Deliberate fake secret for testing validation failures
 	originalSecret := jwtSecret
-	wrongTestSecret := []byte("incorrect-test-jwt-key-for-validation")
+	wrongTestSecret := []byte("WRONG_FAKE_KEY_FOR_TEST_VALIDATION_ONLY")
 	jwtSecret = wrongTestSecret
 	defer func() { jwtSecret = originalSecret }()
 	

@@ -1,0 +1,6 @@
+# Gitleaks ignore file for legitimate test fixtures and non-secrets
+# These are intentional test values, not real secrets
+
+# JWT test file contains deliberate fake secrets for unit testing
+utils/jwt_test.go:18
+utils/jwt_test.go:165
