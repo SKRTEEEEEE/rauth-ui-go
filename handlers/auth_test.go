@@ -288,6 +288,11 @@ func TestFindOrCreateUser_CreateNew(t *testing.T) {
 		t.Skip("Skipping integration test")
 	}
 
+	// Initialize database connection
+	if err := database.Connect(); err != nil {
+		t.Fatalf("Failed to connect to database: %v", err)
+	}
+
 	ctx := context.Background()
 	appID := uuid.New()
 
@@ -334,6 +339,11 @@ func TestFindOrCreateUser_CreateNew(t *testing.T) {
 func TestFindOrCreateUser_ExistingUser(t *testing.T) {
 	if os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping integration test")
+	}
+
+	// Initialize database connection
+	if err := database.Connect(); err != nil {
+		t.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	ctx := context.Background()
