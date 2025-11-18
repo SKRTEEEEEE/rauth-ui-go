@@ -105,6 +105,11 @@ func main() {
 		})
 	})
 
+	// OAuth routes (public)
+	oauthRoutes := app.Group("/api/v1/oauth")
+	oauthRoutes.Get("/authorize", handlers.OAuthAuthorize)
+	oauthRoutes.Get("/callback/:provider", handlers.OAuthCallback)
+
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
