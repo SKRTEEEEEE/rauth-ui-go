@@ -1,5 +1,5 @@
 -- ============================================
--- AuthFlow Database Schema
+-- RAuth Database Schema
 -- ============================================
 
 -- Limpiar tablas si existen (solo para desarrollo)

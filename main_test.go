@@ -14,7 +14,7 @@ import (
 // setupTestApp creates a test Fiber app with the same configuration as main
 func setupTestApp() *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName: "AuthFlow v1.0",
+		AppName: "RAuth v1.0",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
@@ -34,7 +34,7 @@ func setupTestApp() *fiber.App {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "ok",
-			"service": "authflow",
+			"service": "rauth",
 		})
 	})
 
@@ -57,7 +57,7 @@ func TestHealthEndpoint(t *testing.T) {
 			method:         "GET",
 			route:          "/health",
 			expectedStatus: 200,
-			expectedBody:   `{"status":"ok","service":"authflow"}`,
+			expectedBody:   `{"status":"ok","service":"rauth"}`,
 		},
 		{
 			name:           "Health check only accepts GET",
@@ -143,5 +143,5 @@ func TestHealthResponseStructure(t *testing.T) {
 
 	// Verify JSON structure
 	assert.Contains(t, string(body), `"status":"ok"`)
-	assert.Contains(t, string(body), `"service":"authflow"`)
+	assert.Contains(t, string(body), `"service":"rauth"`)
 }

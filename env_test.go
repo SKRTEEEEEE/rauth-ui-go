@@ -202,8 +202,8 @@ func TestPlatformURL(t *testing.T) {
 		},
 		{
 			name:        "Production URL",
-			platformURL: "https://api.authflow.io",
-			expected:    "https://api.authflow.io",
+			platformURL: "https://api.rauth.io",
+			expected:    "https://api.rauth.io",
 		},
 	}
 

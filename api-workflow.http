@@ -1,0 +1,438 @@
+###############################################################################
+# AuthFlow - End-to-End OAuth Workflow
+###############################################################################
+# 
+# Este archivo simula el flujo completo de OAuth que seguirá un usuario final
+# cuando use el SDK de AuthFlow en su aplicación frontend.
+#
+# REQUISITOS:
+# - Servidor corriendo en http://localhost:8080 (docker-compose up)
+# - Extensión REST Client para VSCode (o similar)
+#
+# INSTRUCCIONES:
+# 1. Ejecutar los requests en ORDEN SECUENCIAL (de arriba hacia abajo)
+# 2. Copiar valores importantes (app_id, tokens, etc.) a las variables
+# 3. Usar "Send Request" en cada bloque separado por ###
+#
+###############################################################################
+
+###############################################################################
+# FASE 1: SETUP DEL ADMIN (Una sola vez)
+###############################################################################
+# Este paso lo hace el desarrollador que integra AuthFlow en su app.
+# Solo se ejecuta una vez durante la configuración inicial.
+###############################################################################
+
+### 1.1 - Health Check
+# Verificar que el servidor está funcionando correctamente
+GET http://localhost:8080/health
+Accept: application/json
+
+###
+
+### 1.2 - Crear Nueva Aplicación (Admin)
+# El desarrollador crea su aplicación en el dashboard de AuthFlow
+POST http://localhost:8080/api/v1/admin/apps
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "name": "Mi Aplicación Frontend",
+  "allowed_redirect_uris": [
+    "http://localhost:3000/auth/callback",
+    "http://localhost:3000/login",
+    "https://miapp.com/auth/callback"
+  ],
+  "cors_origins": [
+    "http://localhost:3000",
+    "https://miapp.com"
+  ]
+}
+
+# IMPORTANTE: Copiar el "id" y "api_key" de la respuesta
+# @name createApp
+# Guardar: APP_ID y APP_API_KEY, en la siguiente linea:
+
+@APP_ID = cfa87831-910f-4302-a73a-213ab08b639c
+@APP_API_KEY = e8c1b1b6b1d5c079c10e65681c487ddde2006462d24b499657f0d492f870ec21
+
+
+
+###
+
+### 1.3 - Listar Mis Aplicaciones (Admin)
+# Ver todas las aplicaciones que he creado
+GET http://localhost:8080/api/v1/admin/apps
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+###
+
+### 1.4 - Ver Detalles de Mi Aplicación
+# Obtener información específica de una aplicación
+# NOTA: Reemplazar {app_id} con el ID obtenido en 1.2
+GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+###
+
+### 1.5 - Actualizar Configuración de Aplicación
+# Modificar redirects o CORS de mi aplicación
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "name": "Mi App Actualizada",
+  "allowed_redirect_uris": [
+    "http://localhost:3000/auth/callback",
+    "http://localhost:3000/login",
+    "https://miapp.com/auth/callback",
+    "https://staging.miapp.com/auth/callback"
+  ]
+}
+
+###
+
+###############################################################################
+# FASE 2: CONFIGURACIÓN DE PROVEEDORES OAUTH (Una sola vez)
+###############################################################################
+# El desarrollador habilita los proveedores OAuth que quiere usar
+###############################################################################
+
+### 2.1 - Ver Proveedores OAuth Disponibles
+# Listar todos los proveedores y su estado (enabled/disabled)
+GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+###
+
+### 2.2 - Habilitar Google OAuth
+# Permitir que los usuarios se logueen con Google
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/google
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+
+###
+
+### 2.3 - Habilitar GitHub OAuth
+# Permitir que los usuarios se logueen con GitHub
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/github
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+
+###
+
+### 2.4 - Habilitar Facebook OAuth
+# Permitir que los usuarios se logueen con Facebook
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/facebook
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+
+###
+
+### 2.5 - Deshabilitar un Proveedor (Ejemplo)
+# Si quiero desactivar un proveedor temporalmente
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/facebook
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": false
+}
+
+###
+
+### 2.6 - Verificar Estado Final de Proveedores
+# Confirmar qué proveedores están activos
+GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+###
+
+###############################################################################
+# FASE 3: FLUJO DE AUTENTICACIÓN DEL USUARIO FINAL
+###############################################################################
+# Este es el flujo que ejecutará el SDK de AuthFlow cuando un usuario
+# haga clic en "Login with Google" en el frontend
+###############################################################################
+
+### 3.1 - INICIO: Usuario hace clic en "Login with Google"
+# El SDK redirige al usuario a este endpoint para iniciar OAuth
+# En un navegador real, esto redirigiría a Google
+# 
+# URL que genera el SDK:
+# http://localhost:8080/api/v1/oauth/authorize?provider=google&app_id=02c520c6-e546-4ea7-8ceb-c249ddef41ce&redirect_uri=http://localhost:3000/auth/callback
+#
+# NOTA: Este endpoint NO se puede probar directamente con REST Client
+# porque hace un redirect 302 a Google. Debes copiarlo en un navegador.
+# 
+# El flujo completo sería:
+# 1. Usuario hace clic en botón "Login with Google"
+# 2. SDK construye URL de authorize
+# 3. SDK redirige navegador a /authorize
+# 4. Backend redirige a Google
+# 5. Usuario autoriza en Google
+# 6. Google redirige a /callback con código
+# 7. Backend procesa código y crea sesión
+# 8. Backend redirige a app con JWT
+#
+# URL de ejemplo (copiar en navegador):
+GET http://localhost:8080/api/v1/oauth/authorize?provider=google&app_id=02c520c6-e546-4ea7-8ceb-c249ddef41ce&redirect_uri=http://localhost:3000/auth/callback
+
+###
+
+### 3.2 - CALLBACK: Google redirige de vuelta (simulación)
+# Este endpoint recibe el código de autorización de Google
+# En producción, Google llamaría a este endpoint automáticamente
+#
+# NOTA: Este request fallará porque necesitas un código real de Google
+# Es solo para ilustrar el flujo
+# 
+# Parámetros que Google enviaría:
+# - code: código de autorización temporal
+# - state: token de validación (generado en 3.1)
+#
+# Ejemplo de URL que recibiría el backend:
+GET http://localhost:8080/api/v1/oauth/callback/google?code=GOOGLE_AUTH_CODE&state=RANDOM_STATE_TOKEN
+
+###
+
+###############################################################################
+# FASE 4: GESTIÓN DE SESIONES (Después del Login)
+###############################################################################
+# Una vez que el usuario se ha logueado, el SDK usa estos endpoints
+# para gestionar su sesión
+###############################################################################
+
+### 4.1 - Validar Token JWT
+# El SDK verifica si el token del usuario sigue siendo válido
+# NOTA: Requiere implementación de Milestone 5 (JWT)
+POST http://localhost:8080/api/v1/sessions/validate
+Content-Type: application/json
+
+{
+  "token": "JWT_TOKEN_AQUI"
+}
+
+###
+
+### 4.2 - Refrescar Token JWT
+# El SDK renueva el token antes de que expire
+# NOTA: Requiere implementación de Milestone 5 (JWT)
+POST http://localhost:8080/api/v1/sessions/refresh
+Authorization: Bearer JWT_TOKEN_AQUI
+Content-Type: application/json
+
+###
+
+### 4.3 - Logout (Cerrar Sesión)
+# El usuario hace clic en "Logout" en la app
+# NOTA: Requiere implementación de Milestone 5 (JWT)
+DELETE http://localhost:8080/api/v1/sessions/SESSION_ID
+Authorization: Bearer JWT_TOKEN_AQUI
+
+###
+
+###############################################################################
+# FASE 5: GESTIÓN DE USUARIOS (Perfil del Usuario)
+###############################################################################
+# El SDK permite al usuario ver y editar su perfil
+###############################################################################
+
+### 5.1 - Obtener Perfil del Usuario
+# Ver información del usuario logueado
+# NOTA: Requiere implementación de Milestone 7 (User Management)
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer JWT_TOKEN_AQUI
+Accept: application/json
+
+###
+
+### 5.2 - Actualizar Perfil del Usuario
+# El usuario edita su nombre o avatar
+# NOTA: Requiere implementación de Milestone 7 (User Management)
+PATCH http://localhost:8080/api/v1/users/me
+Authorization: Bearer JWT_TOKEN_AQUI
+Content-Type: application/json
+
+{
+  "name": "Juan Pérez",
+  "avatar_url": "https://ejemplo.com/avatar.jpg"
+}
+
+###
+
+### 5.3 - Eliminar Cuenta
+# El usuario decide borrar su cuenta
+# NOTA: Requiere implementación de Milestone 7 (User Management)
+DELETE http://localhost:8080/api/v1/users/me
+Authorization: Bearer JWT_TOKEN_AQUI
+
+###
+
+###############################################################################
+# FASE 6: ADMIN - MONITOREO DE USUARIOS
+###############################################################################
+# El desarrollador puede ver qué usuarios se han registrado en su app
+###############################################################################
+
+### 6.1 - Ver Usuarios de Mi Aplicación
+# Listar todos los usuarios que se han logueado en mi app
+GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/users
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+###
+
+### 6.2 - Eliminar Mi Aplicación
+# Borrar completamente la aplicación y todos sus datos
+# ⚠️ CUIDADO: Esta acción es irreversible
+DELETE http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce
+X-API-Key: test-api-key-12345
+
+###
+
+###############################################################################
+# CASOS DE ERROR - Testing de Validaciones
+###############################################################################
+# Estos requests demuestran cómo el sistema maneja errores
+###############################################################################
+
+### ERROR 1 - Proveedor Inválido
+# Intentar habilitar un proveedor que no existe
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/twitter
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": true
+}
+
+# Respuesta esperada: 400 Bad Request
+# {
+#   "error": "Invalid provider. Valid providers: google, github, facebook, microsoft"
+# }
+
+###
+
+### ERROR 2 - API Key Inválida
+# Intentar acceder sin autenticación válida
+GET http://localhost:8080/api/v1/admin/apps
+X-API-Key: clave-incorrecta
+Accept: application/json
+
+# Respuesta esperada: 401 Unauthorized
+# {
+#   "error": "Invalid API key"
+# }
+
+###
+
+### ERROR 3 - Aplicación No Encontrada
+# Buscar una aplicación que no existe
+GET http://localhost:8080/api/v1/admin/apps/00000000-0000-0000-0000-000000000000
+X-API-Key: test-api-key-12345
+Accept: application/json
+
+# Respuesta esperada: 404 Not Found
+# {
+#   "error": "Application not found"
+# }
+
+###
+
+### ERROR 4 - Body JSON Inválido
+# Enviar un JSON malformado
+PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/google
+X-API-Key: test-api-key-12345
+Content-Type: application/json
+
+{
+  "enabled": "esto debería ser boolean"
+}
+
+# Respuesta esperada: 400 Bad Request
+# {
+#   "error": "Invalid request body"
+# }
+
+###
+
+###############################################################################
+# RESUMEN DEL FLUJO COMPLETO
+###############################################################################
+#
+# 1. SETUP INICIAL (Desarrollador - Una vez):
+#    ✅ Crear aplicación en AuthFlow
+#    ✅ Configurar redirect URIs y CORS
+#    ✅ Habilitar proveedores OAuth (Google, GitHub, etc.)
+#
+# 2. INTEGRACIÓN EN FRONTEND (Desarrollador - Una vez):
+#    - Instalar SDK de AuthFlow
+#    - Configurar con app_id y proveedores habilitados
+#    - Agregar botones de "Login with Google/GitHub/etc."
+#
+# 3. FLUJO DEL USUARIO FINAL (Cada login):
+#    ✅ Usuario hace clic en "Login with Google"
+#    ✅ SDK redirige a /oauth/authorize
+#    ✅ Backend redirige a Google
+#    ⏳ Usuario autoriza en Google (Milestone 5)
+#    ⏳ Google redirige a /oauth/callback (Milestone 5)
+#    ⏳ Backend crea sesión y retorna JWT (Milestone 5)
+#    ⏳ SDK guarda JWT y mantiene sesión (Milestone 5)
+#
+# 4. USUARIO LOGUEADO (Durante la sesión):
+#    ⏳ Ver/editar perfil (Milestone 7)
+#    ⏳ Refrescar token (Milestone 5)
+#    ⏳ Logout (Milestone 5)
+#
+# 5. MONITOREO (Desarrollador - Cuando necesite):
+#    ✅ Ver lista de usuarios registrados
+#    ✅ Ver estadísticas de uso
+#
+# LEYENDA:
+# ✅ = Ya implementado (Milestone 4 completo)
+# ⏳ = Pendiente (Milestones 5, 6, 7)
+#
+###############################################################################
+
+###############################################################################
+# NOTAS IMPORTANTES PARA DESARROLLADORES
+###############################################################################
+#
+# 1. VARIABLES DE ENTORNO:
+#    - Reemplazar app_id en URLs con tu ID real
+#    - Usar tu API key real (no la de test en producción)
+#
+# 2. SEGURIDAD:
+#    - NUNCA exponer el API Key en el frontend
+#    - API Key solo se usa en backend del desarrollador
+#    - El SDK usa el app_id (público) en el frontend
+#
+# 3. FLUJO OAUTH REAL:
+#    - Los pasos 3.1 y 3.2 requieren un navegador real
+#    - No se pueden ejecutar completamente desde REST Client
+#    - Son redirects 302 que maneja el navegador
+#
+# 4. PRÓXIMOS PASOS:
+#    - Milestone 5: Implementar JWT y OAuth callbacks
+#    - Milestone 6: Agregar más proveedores
+#    - Milestone 7: Gestión completa de usuarios
+#
+###############################################################################

@@ -41,7 +41,7 @@ func main() {
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
-		AppName: "AuthFlow v1.0",
+		AppName: "RAuth v1.0",
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			if e, ok := err.(*fiber.Error); ok {
@@ -71,7 +71,7 @@ func main() {
 
 		return c.JSON(fiber.Map{
 			"status":   "ok",
-			"service":  "authflow",
+			"service":  "rauth",
 			"database": dbStatus,
 			"redis":    redisStatus,
 		})

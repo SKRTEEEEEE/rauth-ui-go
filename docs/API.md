@@ -4,7 +4,7 @@
 Authentication SaaS Platform API - OAuth as a Service
 
 ## Base URL
-```
+```http
 http://localhost:8080/api/v1
 ```
 
@@ -18,7 +18,7 @@ http://localhost:8080/api/v1
 
 #### Start OAuth Flow
 ```http
-GET /oauth/authorize
+GET http://localhost:8080/api/v1/oauth/authorize
 ```
 
 **Query Parameters:**
@@ -338,7 +338,7 @@ const user = await auth.getCurrentUser(jwtToken);
 ### Go
 ```go
 // Initialize client
-client := authflow.NewClient("your-app-id", "your-api-key")
+client := rauth.NewClient("your-app-id", "your-api-key")
 
 // Start OAuth
 url, err := client.GetOAuthURL("google", "http://localhost:3000/callback")
