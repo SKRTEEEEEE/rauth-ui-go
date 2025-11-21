@@ -96,19 +96,15 @@ func OAuthAuthorize(c *fiber.Ctx) error {
 	}
 	callbackURI := fmt.Sprintf("%s/api/v1/oauth/callback/%s", platformURL, provider)
 
-	// Construir URL de autorización según el provider
-	var authURL string
-	switch provider {
-	case models.ProviderGoogle:
-		authURL = oauth.BuildGoogleAuthURL(stateToken, callbackURI)
-	default:
+	providerImpl, ok := oauth.GetProvider(provider)
+	if !ok || providerImpl == nil {
 		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
-			"error": "Provider not implemented yet",
+			"error": fmt.Sprintf("%s OAuth provider is not implemented", provider),
 		})
 	}
 
 	// Redirigir al usuario al provider
-	return c.Redirect(authURL, fiber.StatusTemporaryRedirect)
+	return c.Redirect(providerImpl.BuildAuthURL(stateToken, callbackURI), fiber.StatusTemporaryRedirect)
 }
 
 // OAuthCallback procesa el callback del proveedor OAuth
@@ -138,24 +134,19 @@ func OAuthCallback(c *fiber.Ctx) error {
 	}
 	callbackURI := fmt.Sprintf("%s/api/v1/oauth/callback/%s", platformURL, provider)
 
-	// Intercambiar code por access token según provider
-	var accessToken, refreshToken string
-	var userInfo *models.OAuthUserInfo
-	var err error
-
-	switch provider {
-	case models.ProviderGoogle:
-		accessToken, refreshToken, err = oauth.ExchangeGoogleCode(code, callbackURI)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Failed to exchange code: " + err.Error())
-		}
-
-		userInfo, err = oauth.GetGoogleUserInfo(accessToken)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user info: " + err.Error())
-		}
-	default:
+	providerImpl, ok := oauth.GetProvider(provider)
+	if !ok || providerImpl == nil {
 		return c.Status(fiber.StatusNotImplemented).SendString("Provider not implemented")
+	}
+
+	accessToken, refreshToken, err := providerImpl.ExchangeCode(code, callbackURI)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to exchange code: " + err.Error())
+	}
+
+	userInfo, err := providerImpl.GetUserInfo(accessToken)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user info: " + err.Error())
 	}
 
 	// Encontrar o crear usuario e identidad

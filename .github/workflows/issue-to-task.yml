@@ -1,0 +1,148 @@
+name: Convert Issue to Task File
+
+on:
+  issues:
+    types: [opened, reopened, edited, labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-task-file:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'issues' && contains(github.event.issue.labels.*.name, '👿 Task') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Generate or Update Task File
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+            const { execSync } = require("child_process");
+
+            const issue = context.payload.issue;
+            if (!issue) {
+              console.error("❌ No issue data in payload.");
+              process.exit(1);
+            }
+
+            const issueNumber = issue.number;
+            const issueTitle = (issue.title || "").trim();
+            const issueBody = (issue.body || "").trim();
+            if (!issueTitle) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: "❌ **Error:** Issue title is empty."
+              });
+              process.exit(1);
+            }
+
+            // --- Helpers ---
+            const taskDir = path.join(process.env.GITHUB_WORKSPACE, "docs", "task");
+            if (!fs.existsSync(taskDir)) fs.mkdirSync(taskDir, { recursive: true });
+
+            const sanitizedTitle = issueTitle
+              .toLowerCase()
+              .replace(/\[.*?\]/g, "")
+              .normalize("NFKD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .substring(0, 60);
+
+            const filename = `${issueNumber}-${sanitizedTitle || "issue"}.md`;
+            const taskPath = path.join(taskDir, filename);
+
+            // --- Extract sections safely ---
+            function extractSection(body, heading) {
+              const regex = new RegExp(
+                `##\\s+${heading}[\\s\\S]*?(?=\\n##\\s|$)`,
+                "i"
+              );
+              const match = body.match(regex);
+              return match ? match[0].trim() : "";
+            }
+
+            const objective = extractSection(issueBody, "🎯 Objective");
+            const keyPoints = extractSection(issueBody, "🔑 Key Points");
+
+            if (!objective && !keyPoints) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: "❌ **Format error:** The issue must include at least one section:\n- `## 🎯 Objective`\n- `## 🔑 Key Points`"
+              });
+              console.error("❌ Missing Objective and Key Points");
+              process.exit(1);
+            }
+
+            // --- Clean unwanted sections ---
+            function cleanSection(section) {
+              return section
+                .replace(/##\s+⏱️[\s\S]*?(?=\n##|$)/g, "")
+                .replace(/##\s+✅[\s\S]*?(?=\n##|$)/g, "")
+                // Optional: remove completed checkboxes (- [x])
+                // .replace(/^- \[x\].*$/gmi, "")
+                .trim();
+            }
+
+            const cleanedObjective = cleanSection(objective);
+            const cleanedKeyPoints = cleanSection(keyPoints);
+
+            // --- Build file content ---
+            let fileContent = `# ${issueTitle}\n\n`;
+            if (cleanedObjective) fileContent += `${cleanedObjective}\n\n`;
+            if (cleanedKeyPoints) fileContent += `${cleanedKeyPoints}\n`;
+
+            // --- Update or Create file ---
+            const existing = fs.existsSync(taskPath)
+              ? fs.readFileSync(taskPath, "utf8")
+              : null;
+
+            if (existing && existing.trim() === fileContent.trim()) {
+              console.log(`ℹ️ No changes detected for docs/task/${filename}`);
+              return;
+            }
+
+            fs.writeFileSync(taskPath, fileContent, "utf8");
+            console.log(`✅ Task file ${existing ? "updated" : "created"}: docs/task/${filename}`);
+
+            // --- Commit & push ---
+            try {
+              execSync('git config user.email "action@github.com"');
+              execSync('git config user.name "GitHub Action"');
+              execSync(`git add "${taskPath}"`);
+              execSync(`git commit -m "chore: update task for issue #${issueNumber}" || echo "No changes to commit"`);
+              execSync("git push");
+            } catch (err) {
+              console.error("❌ Git push error:", err.message);
+            }
+
+            // --- Comment only once (English) ---
+            const body = existing
+              ? `♻️ Task file **updated**: \`docs/task/${filename}\``
+              : `✅ Task file **created**: \`docs/task/${filename}\``;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body
+            });

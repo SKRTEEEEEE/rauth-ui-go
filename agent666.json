@@ -1,0 +1,15 @@
+{
+  "github": true,
+  "baseBranch": "main",
+  "behavior": "default",
+  "modifiers": [],
+  "mode": "auto",
+  "skipPermissionsUnsafe": false,
+  "submodules": {
+    "enabled": false,
+    "pushTarget": "main",
+    "branchTarget": "both",
+    "list": [],
+    "recursive": false
+  }
+}
