@@ -7,14 +7,18 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"rauth/models"
 )
 
+const githubUserAgent = "rauth-backend/1.0"
+
 var (
-	githubAuthURL  = "https://github.com/login/oauth/authorize"
-	githubTokenURL = "https://github.com/login/oauth/access_token"
-	githubUserURL  = "https://api.github.com/user"
+	githubAuthURL    = "https://github.com/login/oauth/authorize"
+	githubTokenURL   = "https://github.com/login/oauth/access_token"
+	githubUserURL    = "https://api.github.com/user"
+	githubHTTPClient = &http.Client{Timeout: 10 * time.Second}
 )
 
 // BuildGitHubAuthURL crea la URL de autorización de GitHub
@@ -43,8 +47,9 @@ func ExchangeGitHubCode(code, redirectURI string) (string, string, error) {
 	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	req.Header.Set("User-Agent", githubUserAgent)
+
+	resp, err := githubHTTPClient.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("error exchanging code: %w", err)
 	}
@@ -78,8 +83,9 @@ func GetGitHubUserInfo(accessToken string) (*models.OAuthUserInfo, error) {
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	req.Header.Set("User-Agent", githubUserAgent)
+
+	resp, err := githubHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %w", err)
 	}

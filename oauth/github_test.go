@@ -199,6 +199,54 @@ func TestExchangeGitHubCode_InvalidJSON(t *testing.T) {
 	}
 }
 
+func TestExchangeGitHubCode_SetsUserAgent(t *testing.T) {
+	const expectedUserAgent = "rauth-backend/1.0"
+
+	userAgentHeader := ""
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userAgentHeader = r.Header.Get("User-Agent")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"access_token":  "ua-access-token",
+			"refresh_token": "ua-refresh-token",
+		})
+	}))
+	defer mockServer.Close()
+
+	originalTokenURL := githubTokenURL
+	githubTokenURL = mockServer.URL
+	defer func() { githubTokenURL = originalTokenURL }()
+
+	os.Setenv("GITHUB_CLIENT_ID", "test-client-id")
+	os.Setenv("GITHUB_CLIENT_SECRET", "test-client-secret")
+	defer os.Unsetenv("GITHUB_CLIENT_ID")
+	defer os.Unsetenv("GITHUB_CLIENT_SECRET")
+
+	_, _, err := ExchangeGitHubCode("user-agent-code", "http://localhost")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if userAgentHeader != expectedUserAgent {
+		t.Fatalf("Expected User-Agent '%s', got '%s'", expectedUserAgent, userAgentHeader)
+	}
+}
+
+func TestExchangeGitHubCode_InvalidRequestURL(t *testing.T) {
+	originalTokenURL := githubTokenURL
+	githubTokenURL = "://invalid-url"
+	defer func() { githubTokenURL = originalTokenURL }()
+
+	_, _, err := ExchangeGitHubCode("code", "http://localhost")
+	if err == nil {
+		t.Fatal("Expected error for invalid request URL")
+	}
+	if !strings.Contains(err.Error(), "error creating request") {
+		t.Fatalf("Expected request creation error, got %v", err)
+	}
+}
+
 func TestGetGitHubUserInfo_Success(t *testing.T) {
 	// Create mock server
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -338,6 +386,37 @@ func TestGetGitHubUserInfo_InvalidJSON(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "parsing user info") {
 		t.Errorf("Expected error about parsing user info, got: %v", err)
+	}
+}
+
+func TestGetGitHubUserInfo_SetsUserAgent(t *testing.T) {
+	const expectedUserAgent = "rauth-backend/1.0"
+
+	receivedUserAgent := ""
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedUserAgent = r.Header.Get("User-Agent")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"id":         112233,
+			"email":      "header@test.com",
+			"name":       "Header Test",
+			"avatar_url": "https://avatars.githubusercontent.com/u/112233",
+		})
+	}))
+	defer mockServer.Close()
+
+	originalUserURL := githubUserURL
+	githubUserURL = mockServer.URL
+	defer func() { githubUserURL = originalUserURL }()
+
+	_, err := GetGitHubUserInfo("token-with-user-agent")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if receivedUserAgent != expectedUserAgent {
+		t.Fatalf("Expected User-Agent '%s', got '%s'", expectedUserAgent, receivedUserAgent)
 	}
 }
 

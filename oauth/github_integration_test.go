@@ -162,6 +162,68 @@ func TestGitHubOAuth_FullFlow(t *testing.T) {
 	t.Logf("User Info: ID=%s, Email=%s, Name=%s", userInfo.ProviderUserID, userInfo.Email, userInfo.Name)
 }
 
+// TestGitHubOAuth_MissingRefreshToken ensures the flow works without refresh tokens
+func TestGitHubOAuth_MissingRefreshToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	os.Setenv("GITHUB_CLIENT_ID", "missing-refresh-client-id")
+	os.Setenv("GITHUB_CLIENT_SECRET", "missing-refresh-client-secret")
+	defer os.Unsetenv("GITHUB_CLIENT_ID")
+	defer os.Unsetenv("GITHUB_CLIENT_SECRET")
+
+	mockGitHubServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/token":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "token-no-refresh",
+				"token_type":   "bearer",
+			})
+		case "/user":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{
+				"id":         445566,
+				"email":      "norefresh@github.com",
+				"name":       "No Refresh",
+				"avatar_url": "https://avatars.githubusercontent.com/u/445566",
+			})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer mockGitHubServer.Close()
+
+	originalTokenURL := githubTokenURL
+	originalUserURL := githubUserURL
+	githubTokenURL = mockGitHubServer.URL + "/token"
+	githubUserURL = mockGitHubServer.URL + "/user"
+	defer func() {
+		githubTokenURL = originalTokenURL
+		githubUserURL = originalUserURL
+	}()
+
+	accessToken, refreshToken, err := ExchangeGitHubCode("code-no-refresh", "http://localhost/callback")
+	if err != nil {
+		t.Fatalf("ExchangeGitHubCode failed: %v", err)
+	}
+	if accessToken != "token-no-refresh" {
+		t.Fatalf("Expected access token 'token-no-refresh', got '%s'", accessToken)
+	}
+	if refreshToken != "" {
+		t.Fatalf("Expected empty refresh token, got '%s'", refreshToken)
+	}
+
+	userInfo, err := GetGitHubUserInfo(accessToken)
+	if err != nil {
+		t.Fatalf("GetGitHubUserInfo failed: %v", err)
+	}
+	if userInfo.Email != "norefresh@github.com" {
+		t.Fatalf("Unexpected email %s", userInfo.Email)
+	}
+}
+
 // TestGitHubOAuth_ErrorHandling tests error scenarios in the full flow
 func TestGitHubOAuth_ErrorHandling(t *testing.T) {
 	if testing.Short() {

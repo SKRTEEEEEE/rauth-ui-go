@@ -228,6 +228,24 @@ func TestGitHubOAuthAuthorize_URLConstruction(t *testing.T) {
 	assert.Contains(t, location, "state=")
 }
 
+// TestGitHubOAuthAuthorize_InvalidAppID validates error handling for malformed app IDs
+func TestGitHubOAuthAuthorize_InvalidAppID(t *testing.T) {
+	if os.Getenv("INTEGRATION_TEST") != "true" {
+		t.Skip("Skipping invalid app_id test")
+	}
+
+	app := setupTestApp()
+	req := httptest.NewRequest("GET",
+		"/api/v1/oauth/authorize?provider=github&app_id=not-a-valid-uuid&redirect_uri=http://localhost",
+		nil)
+	resp, err := app.Test(req, -1)
+	require.NoError(t, err)
+
+	assert.Equal(t, 400, resp.StatusCode)
+	body, _ := io.ReadAll(resp.Body)
+	assert.Contains(t, string(body), "Invalid app_id")
+}
+
 // TestGitHubOAuth_ProviderSpecificBehavior tests GitHub-specific OAuth behavior
 func TestGitHubOAuth_ProviderSpecificBehavior(t *testing.T) {
 	if os.Getenv("INTEGRATION_TEST") != "true" {
