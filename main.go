@@ -118,6 +118,15 @@ func main() {
 	userRoutes.Patch("/me", handlers.UpdateMe)
 	userRoutes.Delete("/me", handlers.DeleteMe)
 
+	// Session routes (protected with JWT)
+	sessionRoutes := app.Group("/api/v1/sessions")
+	sessionRoutes.Use(middleware.RequireAuth)
+
+	sessionRoutes.Post("/validate", handlers.ValidateSession)
+	sessionRoutes.Post("/refresh", handlers.RefreshSession)
+	sessionRoutes.Delete("/current", handlers.LogoutSession)
+	sessionRoutes.Get("/", handlers.ListMySessions)
+
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
