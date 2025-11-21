@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // RunMigrations ejecuta el archivo migrations.sql usando la conexión global DB
@@ -15,10 +13,10 @@ func RunMigrations() error {
 }
 
 // RunMigrationsWithPool ejecuta el archivo migrations.sql usando una pool específica
-func RunMigrationsWithPool(pool *pgxpool.Pool) error {
+func RunMigrationsWithPool(db DBPool) error {
 	ctx := context.Background()
 
-	if pool == nil {
+	if db == nil {
 		return fmt.Errorf("database pool is nil")
 	}
 
@@ -29,7 +27,7 @@ func RunMigrationsWithPool(pool *pgxpool.Pool) error {
 	}
 
 	// Ejecutar SQL
-	_, err = pool.Exec(ctx, string(sqlBytes))
+	_, err = db.Exec(ctx, string(sqlBytes))
 	if err != nil {
 		return fmt.Errorf("error executing migrations: %w", err)
 	}

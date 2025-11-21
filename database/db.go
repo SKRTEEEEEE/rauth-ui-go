@@ -7,11 +7,25 @@ import (
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DB is the global database connection pool
-var DB *pgxpool.Pool
+// DBPool defines the interface for database operations, compatible with pgxpool.Pool and mocks
+type DBPool interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Ping(ctx context.Context) error
+	Close()
+}
+
+// DB is the global database connection pool (interface for testability)
+var DB DBPool
+
+// pool holds the actual connection pool for Connect/Close operations
+var pool *pgxpool.Pool
 
 // Connect establishes connection with PostgreSQL and initializes the connection pool
 func Connect() error {
@@ -36,18 +50,19 @@ func Connect() error {
 	config.MaxConnIdleTime = 30 * time.Minute // Close idle connections after 30 minutes
 
 	// Create connection pool
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	p, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return fmt.Errorf("error creating connection pool: %w", err)
 	}
 
 	// Verify connection by pinging the database
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close() // Clean up the pool if ping fails
+	if err := p.Ping(ctx); err != nil {
+		p.Close() // Clean up the pool if ping fails
 		return fmt.Errorf("error pinging database: %w", err)
 	}
 
-	DB = pool
+	pool = p
+	DB = p
 	log.Println("✅ Connected to PostgreSQL")
 	return nil
 }
