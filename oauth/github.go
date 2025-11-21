@@ -21,6 +21,13 @@ var (
 	githubHTTPClient = &http.Client{Timeout: 10 * time.Second}
 )
 
+type githubProvider struct{}
+
+// NewGitHubProvider retorna la implementación concreta del proveedor de GitHub.
+func NewGitHubProvider() OAuthProvider {
+	return &githubProvider{}
+}
+
 // BuildGitHubAuthURL crea la URL de autorización de GitHub
 func BuildGitHubAuthURL(state, redirectURI string) string {
 	params := url.Values{}
@@ -115,4 +122,20 @@ func GetGitHubUserInfo(accessToken string) (*models.OAuthUserInfo, error) {
 		AvatarURL:      githubUser.AvatarURL,
 		EmailVerified:  true, // GitHub verifies emails
 	}, nil
+}
+
+func (g *githubProvider) BuildAuthURL(state, redirectURI string) string {
+	return BuildGitHubAuthURL(state, redirectURI)
+}
+
+func (g *githubProvider) ExchangeCode(code, redirectURI string) (string, string, error) {
+	return ExchangeGitHubCode(code, redirectURI)
+}
+
+func (g *githubProvider) GetUserInfo(accessToken string) (*models.OAuthUserInfo, error) {
+	return GetGitHubUserInfo(accessToken)
+}
+
+func init() {
+	RegisterProvider(models.ProviderGitHub, NewGitHubProvider())
 }

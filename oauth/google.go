@@ -17,6 +17,13 @@ var (
 	googleUserURL  = "https://www.googleapis.com/oauth2/v2/userinfo"
 )
 
+type googleProvider struct{}
+
+// NewGoogleProvider expone la implementación concreta utilizada en runtime.
+func NewGoogleProvider() OAuthProvider {
+	return &googleProvider{}
+}
+
 // BuildGoogleAuthURL crea la URL de autorización de Google
 func BuildGoogleAuthURL(state, redirectURI string) string {
 	params := url.Values{}
@@ -102,4 +109,23 @@ func GetGoogleUserInfo(accessToken string) (*models.OAuthUserInfo, error) {
 		AvatarURL:      googleUser.Picture,
 		EmailVerified:  googleUser.VerifiedEmail,
 	}, nil
+}
+
+// BuildAuthURL implementa OAuthProvider.BuildAuthURL.
+func (g *googleProvider) BuildAuthURL(state, redirectURI string) string {
+	return BuildGoogleAuthURL(state, redirectURI)
+}
+
+// ExchangeCode implementa OAuthProvider.ExchangeCode.
+func (g *googleProvider) ExchangeCode(code, redirectURI string) (string, string, error) {
+	return ExchangeGoogleCode(code, redirectURI)
+}
+
+// GetUserInfo implementa OAuthProvider.GetUserInfo.
+func (g *googleProvider) GetUserInfo(accessToken string) (*models.OAuthUserInfo, error) {
+	return GetGoogleUserInfo(accessToken)
+}
+
+func init() {
+	RegisterProvider(models.ProviderGoogle, NewGoogleProvider())
 }
