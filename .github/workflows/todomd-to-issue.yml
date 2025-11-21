@@ -1,0 +1,53 @@
+name: Convert todo.md to GitHub Issues
+
+# FIX: error al parse texto direct
+# FEAT: assign-me, label-by-convetional-commit
+
+on:
+  push:
+    branches-ignore:
+      - 'agent/**'
+    paths:
+      - 'todo.md'
+  pull_request:
+    branches-ignore:
+      - 'agent/**'
+    paths:
+      - 'todo.md'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  convert-todo-to-issue:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Convert TODO.md to GitHub Issues
+        id: todomd-to-issue
+        uses: SKRTEEEEEE/todomd-to-issue@v0.4.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          todo-file-path: 'todo.md'
+          labels: 'automated,agent666'
+          delete-todo-after: 'true'
+
+      - name: Show results
+        run: |
+          echo "Issues created: ${{ steps.todomd-to-issue.outputs.issues-created }}"
+          echo "Issue URLs: ${{ steps.todomd-to-issue.outputs.issue-urls }}"
+
+      - name: Commit deletion of todo.md
+        if: steps.todomd-to-issue.outputs.issues-created > 0
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: Processed todo.md and created ${{ steps.todomd-to-issue.outputs.issues-created }} issue(s)"
+          git push
