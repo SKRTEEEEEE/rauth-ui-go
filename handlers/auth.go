@@ -101,6 +101,8 @@ func OAuthAuthorize(c *fiber.Ctx) error {
 	switch provider {
 	case models.ProviderGoogle:
 		authURL = oauth.BuildGoogleAuthURL(stateToken, callbackURI)
+	case models.ProviderGitHub:
+		authURL = oauth.BuildGitHubAuthURL(stateToken, callbackURI)
 	default:
 		return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
 			"error": "Provider not implemented yet",
@@ -151,6 +153,16 @@ func OAuthCallback(c *fiber.Ctx) error {
 		}
 
 		userInfo, err = oauth.GetGoogleUserInfo(accessToken)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user info: " + err.Error())
+		}
+	case models.ProviderGitHub:
+		accessToken, refreshToken, err = oauth.ExchangeGitHubCode(code, callbackURI)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to exchange code: " + err.Error())
+		}
+
+		userInfo, err = oauth.GetGitHubUserInfo(accessToken)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user info: " + err.Error())
 		}
