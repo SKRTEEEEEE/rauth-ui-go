@@ -110,6 +110,14 @@ func main() {
 	oauthRoutes.Get("/authorize", handlers.OAuthAuthorize)
 	oauthRoutes.Get("/callback/:provider", handlers.OAuthCallback)
 
+	// User routes (protected with JWT)
+	userRoutes := app.Group("/api/v1/users")
+	userRoutes.Use(middleware.RequireAuth)
+
+	userRoutes.Get("/me", handlers.GetMe)
+	userRoutes.Patch("/me", handlers.UpdateMe)
+	userRoutes.Delete("/me", handlers.DeleteMe)
+
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
