@@ -30,3 +30,18 @@ type UserWithIdentities struct {
 	User       User       `json:"user"`
 	Identities []Identity `json:"identities"`
 }
+
+// RegisterRequest es el request para registrar un nuevo usuario con email/password
+type RegisterRequest struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Name     *string   `json:"name,omitempty"`
+	AppID    uuid.UUID `json:"app_id"`
+}
+
+// LoginRequest es el request para iniciar sesión con email/password
+type LoginRequest struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	AppID    uuid.UUID `json:"app_id"`
+}

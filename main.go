@@ -110,6 +110,11 @@ func main() {
 	oauthRoutes.Get("/authorize", handlers.OAuthAuthorize)
 	oauthRoutes.Get("/callback/:provider", handlers.OAuthCallback)
 
+	// Auth routes (public)
+	authRoutes := app.Group("/api/v1/auth")
+	authRoutes.Post("/register", handlers.Register)
+	authRoutes.Post("/login", handlers.Login)
+
 	// User routes (protected with JWT)
 	userRoutes := app.Group("/api/v1/users")
 	userRoutes.Use(middleware.RequireAuth)
