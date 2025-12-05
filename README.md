@@ -95,8 +95,38 @@ You should see:
 Test the health endpoint:
 ```bash
 curl http://localhost:8080/health
-# Expected: {"database":"ok","redis":"ok","service":"authflow","status":"ok"}
+# Expected: {"database":"ok","redis":"ok","service":"rauth","status":"ok"}
 ```
+
+## API Endpoints
+
+### Public Endpoints
+- `GET /health` - Health check endpoint
+
+### OAuth Endpoints (Public)
+- `GET /api/v1/oauth/authorize` - Start OAuth flow
+- `GET /api/v1/oauth/callback/:provider` - OAuth callback
+
+### User Endpoints (JWT Protected)
+- `GET /api/v1/users/me` - Get current user profile
+- `PATCH /api/v1/users/me` - Update user profile
+- `DELETE /api/v1/users/me` - Delete user account
+
+### Session Endpoints (JWT Protected)
+- `POST /api/v1/sessions/validate` - Validate current token
+- `POST /api/v1/sessions/refresh` - Refresh JWT token
+- `DELETE /api/v1/sessions/current` - Logout (delete session)
+- `GET /api/v1/sessions/` - List all active sessions
+
+### Admin Endpoints (API Key Protected)
+- `POST /api/v1/admin/apps` - Create application
+- `GET /api/v1/admin/apps` - List applications
+- `GET /api/v1/admin/apps/:id` - Get application details
+- `PATCH /api/v1/admin/apps/:id` - Update application
+- `DELETE /api/v1/admin/apps/:id` - Delete application
+- `GET /api/v1/admin/apps/:id/users` - List application users
+- `GET /api/v1/admin/apps/:id/oauth` - List OAuth providers
+- `PATCH /api/v1/admin/apps/:id/oauth/:provider` - Toggle OAuth provider
 
 
 

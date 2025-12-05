@@ -34,9 +34,9 @@ type stubOAuthProvider struct {
 
 func newStubOAuthProvider() *stubOAuthProvider {
 	return &stubOAuthProvider{
-		authURL:     "https://stub.example/authorize",
-		accessToken: "stub-access-token",
-		refreshToken:"stub-refresh-token",
+		authURL:      "https://stub.example/authorize",
+		accessToken:  "stub-access-token",
+		refreshToken: "stub-refresh-token",
 		userInfo: &models.OAuthUserInfo{
 			ProviderUserID: "stub-user",
 			Email:          "stub@example.com",

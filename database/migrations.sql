@@ -61,6 +61,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     app_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
     email VARCHAR(255),
+    password_hash VARCHAR(255),
     name VARCHAR(255),
     avatar_url TEXT,
     email_verified BOOLEAN DEFAULT false,
@@ -75,6 +76,7 @@ CREATE INDEX idx_users_email ON users(email);
 
 COMMENT ON TABLE users IS 'Usuarios finales de las aplicaciones';
 COMMENT ON COLUMN users.email IS 'Email del usuario (puede ser null si solo usa OAuth)';
+COMMENT ON COLUMN users.password_hash IS 'Hash bcrypt de la contraseña (null para usuarios OAuth)';
 COMMENT ON COLUMN users.avatar_url IS 'URL del avatar (Azure Blob Storage)';
 
 -- ============================================

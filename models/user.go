@@ -30,3 +30,47 @@ type UserWithIdentities struct {
 	User       User       `json:"user"`
 	Identities []Identity `json:"identities"`
 }
+
+// RegisterRequest es el request para registrar un nuevo usuario con email/password
+type RegisterRequest struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Name     *string   `json:"name,omitempty"`
+	AppID    uuid.UUID `json:"app_id"`
+}
+
+// LoginRequest es el request para iniciar sesión con email/password
+type LoginRequest struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	AppID    uuid.UUID `json:"app_id"`
+}
+
+// VerifyEmailRequest es el request para verificar un email
+type VerifyEmailRequest struct {
+	Token string `json:"token"`
+}
+
+// ResendVerificationRequest es el request para reenviar email de verificación
+type ResendVerificationRequest struct {
+	Email string    `json:"email"`
+	AppID uuid.UUID `json:"app_id"`
+}
+
+// ForgotPasswordRequest es el request para solicitar reset de contraseña
+type ForgotPasswordRequest struct {
+	Email string    `json:"email"`
+	AppID uuid.UUID `json:"app_id"`
+}
+
+// ResetPasswordRequest es el request para resetear la contraseña
+type ResetPasswordRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+// ChangePasswordRequest es el request para cambiar la contraseña (usuario autenticado)
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
