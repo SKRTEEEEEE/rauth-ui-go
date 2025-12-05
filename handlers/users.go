@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"rauth/database"
 	"rauth/middleware"
 	"rauth/models"
+	"rauth/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5"
@@ -190,4 +193,103 @@ func DeleteMe(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNoContent).Send(nil)
+}
+
+// ChangePassword changes the password for an authenticated user
+// POST /api/v1/users/me/change-password
+func ChangePassword(c *fiber.Ctx) error {
+	claims, err := middleware.GetJWTClaims(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	var req models.ChangePasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate request
+	if req.CurrentPassword == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "current_password is required",
+		})
+	}
+	if req.NewPassword == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "new_password is required",
+		})
+	}
+
+	// Validate new password strength
+	if len(req.NewPassword) < 8 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "password must be at least 8 characters long",
+		})
+	}
+
+	// Change password
+	ctx := context.Background()
+	if err := changePassword(ctx, claims.UserID, &req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password changed successfully",
+	})
+}
+
+// changePassword changes the password for a user
+func changePassword(ctx context.Context, userID interface{}, req *models.ChangePasswordRequest) error {
+	// Get current password hash
+	var currentPasswordHash *string
+	err := database.DB.QueryRow(ctx,
+		"SELECT password_hash FROM users WHERE id = $1",
+		userID).Scan(&currentPasswordHash)
+
+	if err == pgx.ErrNoRows {
+		return errors.New("user not found")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	// Check if user has a password (OAuth users don't have password_hash)
+	if currentPasswordHash == nil || *currentPasswordHash == "" {
+		return errors.New("cannot change password for OAuth users")
+	}
+
+	// Verify current password
+	if !utils.ComparePassword(*currentPasswordHash, req.CurrentPassword) {
+		return errors.New("current password is incorrect")
+	}
+
+	// Hash new password
+	newPasswordHash, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Update password
+	_, err = database.DB.Exec(ctx,
+		"UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3",
+		newPasswordHash, time.Now(), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	// Invalidate all sessions for this user
+	_, err = database.DB.Exec(ctx,
+		"DELETE FROM sessions WHERE user_id = $1",
+		userID)
+	if err != nil {
+		return fmt.Errorf("failed to invalidate sessions: %w", err)
+	}
+
+	return nil
 }

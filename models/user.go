@@ -56,3 +56,21 @@ type ResendVerificationRequest struct {
 	Email string    `json:"email"`
 	AppID uuid.UUID `json:"app_id"`
 }
+
+// ForgotPasswordRequest es el request para solicitar reset de contraseña
+type ForgotPasswordRequest struct {
+	Email string    `json:"email"`
+	AppID uuid.UUID `json:"app_id"`
+}
+
+// ResetPasswordRequest es el request para resetear la contraseña
+type ResetPasswordRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+// ChangePasswordRequest es el request para cambiar la contraseña (usuario autenticado)
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}

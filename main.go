@@ -116,6 +116,8 @@ func main() {
 	authRoutes.Post("/login", handlers.Login)
 	authRoutes.Post("/verify-email", handlers.VerifyEmail)
 	authRoutes.Post("/resend-verification", handlers.ResendVerification)
+	authRoutes.Post("/forgot-password", handlers.ForgotPassword)
+	authRoutes.Post("/reset-password", handlers.ResetPassword)
 
 	// User routes (protected with JWT)
 	userRoutes := app.Group("/api/v1/users")
@@ -124,6 +126,7 @@ func main() {
 	userRoutes.Get("/me", handlers.GetMe)
 	userRoutes.Patch("/me", handlers.UpdateMe)
 	userRoutes.Delete("/me", handlers.DeleteMe)
+	userRoutes.Post("/me/change-password", handlers.ChangePassword)
 
 	// Session routes (protected with JWT)
 	sessionRoutes := app.Group("/api/v1/sessions")

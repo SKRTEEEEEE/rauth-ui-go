@@ -293,3 +293,181 @@ func createSession(ctx context.Context, sessionID, userID, appID uuid.UUID, toke
 
 	return nil
 }
+
+// ForgotPassword handles password reset requests
+func ForgotPassword(c *fiber.Ctx) error {
+	var req models.ForgotPasswordRequest
+
+	// Parse request body
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate request
+	if req.Email == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "email is required",
+		})
+	}
+	if req.AppID == uuid.Nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "app_id is required",
+		})
+	}
+	if err := validateEmail(req.Email); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Process forgot password (don't reveal if email exists)
+	ctx := context.Background()
+	_, _ = forgotPassword(ctx, &req)
+
+	// Always return success to prevent email enumeration
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password reset email sent",
+	})
+}
+
+// ResetPassword handles password reset confirmation
+func ResetPassword(c *fiber.Ctx) error {
+	var req models.ResetPasswordRequest
+
+	// Parse request body
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Validate request
+	if req.Token == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "token is required",
+		})
+	}
+	if req.NewPassword == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "new_password is required",
+		})
+	}
+	if err := validatePassword(req.NewPassword); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Reset password
+	ctx := context.Background()
+	if err := resetPassword(ctx, &req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password reset successfully",
+	})
+}
+
+// forgotPassword generates a reset token and sends email
+func forgotPassword(ctx context.Context, req *models.ForgotPasswordRequest) (string, error) {
+	// Normalize email to lowercase
+	email := strings.ToLower(req.Email)
+
+	// Check if user exists
+	var userID uuid.UUID
+	err := database.DB.QueryRow(ctx,
+		"SELECT id FROM users WHERE LOWER(email) = $1 AND app_id = $2",
+		email, req.AppID).Scan(&userID)
+
+	if err == pgx.ErrNoRows {
+		// Don't reveal that email doesn't exist (security best practice)
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	// Delete any existing reset tokens for this email (cleanup old tokens)
+	// Use pattern matching to find all reset tokens for this user
+	iter := database.RedisClient.Scan(ctx, 0, "reset:*", 0).Iterator()
+	for iter.Next(ctx) {
+		key := iter.Val()
+		existingEmail, err := database.GetString(ctx, key)
+		if err == nil && strings.ToLower(existingEmail) == email {
+			database.Delete(ctx, key)
+		}
+	}
+
+	// Generate reset token
+	resetToken := uuid.New().String()
+
+	// Store token in Redis with 1 hour expiration
+	err = database.SetString(ctx, "reset:"+resetToken, email, 1*time.Hour)
+	if err != nil {
+		return "", fmt.Errorf("failed to store reset token: %w", err)
+	}
+
+	// TODO: Send email with reset link
+	// For now, just log the token (in production, send email)
+	fmt.Printf("Password reset token for %s: %s\n", email, resetToken)
+
+	return resetToken, nil
+}
+
+// resetPassword validates token and updates password
+func resetPassword(ctx context.Context, req *models.ResetPasswordRequest) error {
+	// Verify reset token exists in Redis
+	email, err := database.GetString(ctx, "reset:"+req.Token)
+	if err != nil {
+		return errors.New("invalid or expired reset token")
+	}
+
+	// Get user by email
+	var userID uuid.UUID
+	var appID uuid.UUID
+	err = database.DB.QueryRow(ctx,
+		"SELECT id, app_id FROM users WHERE LOWER(email) = $1",
+		strings.ToLower(email)).Scan(&userID, &appID)
+
+	if err == pgx.ErrNoRows {
+		return errors.New("user not found")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	// Hash new password
+	passwordHash, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
+
+	// Update password
+	_, err = database.DB.Exec(ctx,
+		"UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3",
+		passwordHash, time.Now(), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	// Invalidate all sessions for this user
+	_, err = database.DB.Exec(ctx,
+		"DELETE FROM sessions WHERE user_id = $1",
+		userID)
+	if err != nil {
+		return fmt.Errorf("failed to invalidate sessions: %w", err)
+	}
+
+	// Delete the reset token (one-time use)
+	err = database.Delete(ctx, "reset:"+req.Token)
+	if err != nil {
+		return fmt.Errorf("failed to delete reset token: %w", err)
+	}
+
+	return nil
+}
