@@ -114,6 +114,8 @@ func main() {
 	authRoutes := app.Group("/api/v1/auth")
 	authRoutes.Post("/register", handlers.Register)
 	authRoutes.Post("/login", handlers.Login)
+	authRoutes.Post("/verify-email", handlers.VerifyEmail)
+	authRoutes.Post("/resend-verification", handlers.ResendVerification)
 
 	// User routes (protected with JWT)
 	userRoutes := app.Group("/api/v1/users")

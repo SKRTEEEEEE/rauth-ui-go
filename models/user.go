@@ -45,3 +45,14 @@ type LoginRequest struct {
 	Password string    `json:"password"`
 	AppID    uuid.UUID `json:"app_id"`
 }
+
+// VerifyEmailRequest es el request para verificar un email
+type VerifyEmailRequest struct {
+	Token string `json:"token"`
+}
+
+// ResendVerificationRequest es el request para reenviar email de verificación
+type ResendVerificationRequest struct {
+	Email string    `json:"email"`
+	AppID uuid.UUID `json:"app_id"`
+}
