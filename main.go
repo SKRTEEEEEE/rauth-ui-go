@@ -12,7 +12,6 @@ import (
 	"rauth/middleware"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
@@ -55,7 +54,7 @@ func main() {
 
 	// Middleware
 	app.Use(logger.New())
-	app.Use(cors.New())
+	app.Use(middleware.DynamicCORS())
 
 	// Health check endpoint (now includes database and Redis status)
 	app.Get("/health", func(c *fiber.Ctx) error {
