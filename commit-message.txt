@@ -1,0 +1,9 @@
+feat: Add automatic database migrations on startup
+
+- Add RunMigrations() call in main.go to automatically execute migrations
+- Add log message for successful migrations
+- Fix database initialization order (migrations before Redis)
+- Update .env with TEST_APP_ID and TEST_API_KEY variables for development
+
+CO-CREATED by Agent666 — ⟦ Product of SKRTEEEEEE ⟧
+Co-authored-by: Agent666 <agent666@skrte.ai>

@@ -33,6 +33,12 @@ func main() {
 	}
 	defer database.Close()
 
+	// Run database migrations
+	if err := database.RunMigrations(); err != nil {
+		log.Fatalf("❌ Database migrations failed: %v", err)
+	}
+	log.Println("✅ Database migrations completed")
+
 	// Connect to Redis
 	if err := database.ConnectRedis(); err != nil {
 		log.Fatalf("❌ Redis connection failed: %v", err)
