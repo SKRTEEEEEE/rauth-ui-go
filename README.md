@@ -24,6 +24,25 @@ A monolithic backend service built in Go that provides authentication-as-a-servi
 
 ## Quick Start
 
+### 1. Use Docker Compose
+```bash
+docker compose up -d
+```
+
+- *Use Docker for start the services.*
+- Don't forget to configure the .env file of this project
+### 2. Restart the application example
+- *Use [api-workflow.http](./api-workflow.http) for manage the endpoints.*
+    - **You should do the steps till Phase 2 (included).** Phase 3 is optional.
+
+- *Save your APP ID in the variables of [api-workflow.http](./api-workflow.http) and __in the .env of the 'frontend' project__ (where you are going to use the SDK).*
+
+### 3. Configure the SDK in your frontend project
+- *See a example in [rauth-ui-next-example](https://github.com/SKRTEEEEEE/rauth-ui-next-example)*
+
+
+## First Start
+
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>

@@ -53,8 +53,8 @@ Content-Type: application/json
 # @name createApp
 # Guardar: APP_ID y APP_API_KEY, en la siguiente linea:
 
-@APP_ID = cfa87831-910f-4302-a73a-213ab08b639c
-@APP_API_KEY = e8c1b1b6b1d5c079c10e65681c487ddde2006462d24b499657f0d492f870ec21
+@APP_ID = e2c7dcc7-ca32-4516-9c2e-7768b4340c1c
+@APP_API_KEY = test-api-key-12345
 
 
 
@@ -71,7 +71,7 @@ Accept: application/json
 ### 1.4 - Ver Detalles de Mi Aplicación
 # Obtener información específica de una aplicación
 # NOTA: Reemplazar {app_id} con el ID obtenido en 1.2
-GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce
+GET http://localhost:8080/api/v1/admin/apps/{{APP_ID}}
 X-API-Key: test-api-key-12345
 Accept: application/json
 
@@ -79,7 +79,7 @@ Accept: application/json
 
 ### 1.5 - Actualizar Configuración de Aplicación
 # Modificar redirects o CORS de mi aplicación
-PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce
+PATCH http://localhost:8080/api/v1/admin/apps/{{APP_ID}}
 X-API-Key: test-api-key-12345
 Content-Type: application/json
 
@@ -103,7 +103,7 @@ Content-Type: application/json
 
 ### 2.1 - Ver Proveedores OAuth Disponibles
 # Listar todos los proveedores y su estado (enabled/disabled)
-GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth
+GET http://localhost:8080/api/v1/admin/apps/{{APP_ID}}/oauth
 X-API-Key: test-api-key-12345
 Accept: application/json
 
@@ -111,7 +111,7 @@ Accept: application/json
 
 ### 2.2 - Habilitar Google OAuth
 # Permitir que los usuarios se logueen con Google
-PATCH http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth/google
+PATCH http://localhost:8080/api/v1/admin/apps/{{APP_ID}}/oauth/google
 X-API-Key: test-api-key-12345
 Content-Type: application/json
 
@@ -159,7 +159,7 @@ Content-Type: application/json
 
 ### 2.6 - Verificar Estado Final de Proveedores
 # Confirmar qué proveedores están activos
-GET http://localhost:8080/api/v1/admin/apps/02c520c6-e546-4ea7-8ceb-c249ddef41ce/oauth
+GET http://localhost:8080/api/v1/admin/apps/{{APP_ID}}/oauth
 X-API-Key: test-api-key-12345
 Accept: application/json
 
