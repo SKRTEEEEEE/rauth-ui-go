@@ -8,8 +8,6 @@ rauth.exe
 *.out
 # Environment
 .env
-.env.*
-!.env.example
 # Logs
 *.log
 tmp/
